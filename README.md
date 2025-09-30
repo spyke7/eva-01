@@ -1,23 +1,28 @@
 <a name="readme-top"></a>
-![](https://img.shields.io/maintenance/yes/2022)
+![](https://img.shields.io/maintenance/yes/2025)
 ![](https://img.shields.io/readthedocs/cplusplus)
-![](https://img.shields.io/github/stars/Shreejan-35/CommandConsole)
-![](https://img.shields.io/github/last-commit/Shreejan-35/CommandConsole)
-[![CodeFactor](https://www.codefactor.io/repository/github/capeddemon/commandconsole/badge)](https://www.codefactor.io/repository/github/capeddemon/commandconsole)
-![](https://img.shields.io/github/license/Shreejan-35/CommandConsole)
-![](https://img.shields.io/github/issues/Shreejan-35/CommandConsole)
+![](https://img.shields.io/github/stars/spyke7/eva-01)
+![](https://img.shields.io/github/last-commit/spyke7/eva-01)
+[![CodeFactor](https://www.codefactor.io/repository/github/spyke7/eva-01/badge)](https://www.codefactor.io/repository/github/spyke7/eva-01)
+![](https://img.shields.io/github/license/spyke7/eva-01)
+![](https://img.shields.io/github/issues/spyke7/eva-01)
+
+# **Heavily under construction. Transitioning completey to c++ and also changing the code structure. It will be gonna based on the neon genesis evangelion anime. The main parse command is still being written but all other required commands are writted**
+
 
 <p align="left"> <a href="https://www.gnu.org/software/bash/" target="_blank"> <img src="https://www.vectorlogo.zone/logos/gnu_bash/gnu_bash-icon.svg" alt="bash" width="40" height="40"/> </a>
 
 <div align="center">
-<h1 align="center">CommandConsole</h1>
-<h4 align="center">Join our discord - </h4>
-<a href="https://discord.gg/ThqEgJVn">CommandConsole Server</a>
-<br>
-As the name suggests this is a shell like software. Like a normal shell in linux or command prompt in windows, it also works like the same. It is made using C++ language and my motive of building this software is to refresh my C++ language skills and to make something which can take command and work.
-<br/>
-<img src="https://github.com/Shreejan-35/CommandConsole/blob/main/images/CommandLogo.png" alt= "..">
+<h1 align="center">🟣 EVA-01 Shell</h1>
+The **Eva-01 Shell** is an immersive CLI experience.  
+Inspired by **NERV and EVAs** from _Neon Genesis Evangelion_.
 
+Eva-01 features:
+
+<li> Clean, organized, and minimal. </li>
+<li> Faster command parsing & execution. </li>
+<li> Built to be <b>developer-friendly</b>, <b>extendable</b>, and <b>modular</b>. </li>
+<br/>
 </div>
 
 <details>
@@ -46,7 +51,7 @@ As the name suggests this is a shell like software. Like a normal shell in linux
   </ol>
 </details>
 
-## **FEATURES**
+## 🚀 **Features**
 
 - Light Weight
 - Fast
@@ -58,62 +63,27 @@ As the name suggests this is a shell like software. Like a normal shell in linux
 
 ## **Documentation**
 
-![](https://github.com/Shreejan-35/CommandConsole/blob/main/images/Overview.jpg)
-
-<br/>
-The main program is written in the main.cpp file and the functions written there are in there individual files and I have made them header files and included them where it is necessary. All the code is written in C++ language. I have included CommandConsole.exe file of the main.c++ file. I have run it in my system and it worked fine doing all the things.
-
-<br/>
-
 ### Commands:
-
-- Calculator: calc
-- Change Current Working Directory: ccwd
-- Clear the Screen: clr
-- Show the time: time
-- Make new directory: mkdr
-- Help(which show all the function to be run): help
-- List all the files and directories: list
-- Create new file: make
-- Print the current working directory: pcwd
-- Remove the file: remo
-- Remove the directory file: rmdr
-- Append something in a file: wrta
-- Write something in a file: wrte
-- Print the content of the file: read
-- Change the username and password: cnge
-- Copy the contents of one file to another file: cfile
-- Print the information of OS: sys
-- Print the thing you wanted: echo
-- Print username & password: root
-- Rename the file: rfile
-- Rename the folder: rdr
-- To confirm that a file or folder is present in a directory specified by you: getf
-- To get the number of line of a file in which a specified word is present: findf
-- To get the list of past commands: hist
-- To start a game: game.
-  (A new cricket game is added to this application so that the users can enjoy while doing work. Check Others/cricket.hpp)
-
+- [x] view - Displays the content of the files. `view <file1> <file2> <...>`
+- [x] time - It just shows you the time.
+- [x] forge - It makes directory. Command - `forge <directory1> <directory2> <...>`
+- [x] calc - Just a simple calculator.
+- [x] say - Prints text to the console and also write and appends text into files which are in double quotes only
+         and ends with >> and file name with proper space. `say <text>` or `say <"text"> >> <filename>`
+- [x] clear - Clears the console.
+- [x] show - Shows all the folder and files present in the working directory.
+- [x] jump - Changes the directory to the given directory.
+- [x] help - Gives information about the commands
+- [x] erase - Deletes the provided files and folders. `erase <file1> <folder1> <file2> <...>`
+- [x] craft - Creates files only. `craft <file1> <file2> <...>`
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Internet
 
-Now, in CommandConsole you can find things related to internet like ping to a website, getting the IPv4 address, etc
-The commands are :-
-
-- Print the IPv4 address: ipad
-
-**We have used the concept of _Queue_ in the code using the stl library.**
-
-All the functions are written in **MainCommands.hpp**
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Important:
-
-- Provide the correct command or else it will show "GIVE THE RIGHT COMMAND :}>".
-- Type quit to stop the shell.
-- When changing the directory provide the exact name of the directory.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -122,58 +92,6 @@ All the functions are written in **MainCommands.hpp**
 
 ## **GETTING STARTED**
 
-![](https://github.com/Shreejan-35/CommandConsole/blob/main/images/Download.jpg)
-
-If you have docker installed then it is very good. The steps to execute the software using docker are as follows:-
-
-- type :-
-
-```
-docker run -it shreejan35/commandconsole:version (The latest version is available in the releases).
-```
-
-_Try to use the laterst version which is bug free_
-
-- It will pull the image from the docker hub.
-- When all the things are done it will start the program.
-- It will be like a normal shell. First of all type 'list' then check that all the files which are there in the github are shown there.
-- Don't do anything there or else the software will not work as that is the only working directory.
-- I have made another directory for you all, i.e, home. Go there by using 'ccwd' command.
-- Finally test all the commands.
-- Here is my docker repository link - https://hub.docker.com/repository/docker/shreejan35/commandconsole
-
-You can clone my repository by executing this:-
-
-```
-git clone https://github.com/CapedDemon/CommandConsole.git
-```
-
-**To run CommandConsole in linux/unix run:-**
-
-```
-sudo apt-get install wine
-wine CommandConsole.exe
-```
-
-You can also download the zip file, and then run the CommandConsole.exe file.
-
-**Prerequisite**
-
-- Git need to be installed
-- The folder or directory in which you have kept the application need to have the name CommandConsole or else there can be some error.
-
-### Screenshot
-
-![](https://github.com/Shreejan-35/CommandConsole/blob/main/images/Screenshot.JPG)
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-## **HISTORY**
-
-> Probably saying the Command Console is written in C which you can check in the previous versions/releases.
-> But with modern days comes modern tech. which is needed. That's why it is implemented in c++.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## **CONTIBUTING**
 

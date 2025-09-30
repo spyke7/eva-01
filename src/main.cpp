@@ -1,341 +1,65 @@
+#include "CentralDogma.hpp"
+#include "TerminalDogma.hpp"
 #include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <string.h>
-#include <time.h>
-#include <queue>
-#include "../includes/maincommands.hpp"
-#include "maincommands.cpp"
-#include "Others/cricket.cpp"
-#include "internetthings.cpp"
+#include <vector>
+#include <string>
 
-using namespace std;
-
-class CClass
-{
-public:
-    CClass(bool startprogram)
-    {
-        CClass::startprogram = startprogram;
-    };
-    // implementation of queue
-    queue<string> Q;
-
-    const double version = 3.5;
-    void welcomeStatement();
-    void cmdTake();
-    int showRuncmdloop();
-
-private:
-    bool startprogram = false;
-    bool runingcmdloop = false;
-
-    // intialization to check the time
-    time_t computertime;
-
-    // seeking username and password.
-    // Going to make the variables and ask for username and password
-    // if not present in the files
-    string username, password;
-    string rootPassword = "root/userdetails/passwd.txt";
-    string rootUsername = "root/userdetails/user.txt";
-
-    // checking the file size and logging in
-    bool CheckAndLogin()
-    {
-        bool finaldecision;
-        int fileSize;
-
-        ifstream in_file(rootPassword, ios::binary);
-        in_file.seekg(0, ios::end);
-        fileSize = in_file.tellg();
-
-        // new user
-        if (fileSize == 0)
-        {
-            // another variable to verify the password
-            string verifyPassword;
-
-            // we will repeat the process of entering the values
-            // until password is correct
-            int passLoop = 1;
-            while (passLoop)
-            {
-                cout << "Enter a beautiful and dashing username - \n";
-                getline(cin, username);
-
-                cout << "Enter a strong password - ";
-                getline(cin, password);
-
-                cout << "Verify password - ";
-                getline(cin, verifyPassword);
-
-                // verifying
-                if (password == verifyPassword)
-                {
-                    ofstream userFile(rootUsername);
-                    ofstream userPasswd(rootPassword);
-
-                    userFile << username;
-                    userPasswd << password;
-
-                    userFile.close();
-                    userPasswd.close();
-
-                    passLoop = 0;
-                    finaldecision = true;
-                }
-
-                else
-                {
-                    string choice;
-                    cout << "OOPs ! Password didn't match!\nWant to continue - (y/n): ";
-
-                    getline(cin, choice);
-
-                    if (choice == "n")
-                    {
-                        passLoop = 0;
-                        finaldecision = false;
-                    }
-                }
-            }
+std::vector<std::string> split(const std::string& command){
+    std::vector<std::string> tokens;
+    std::string token;
+    for (size_t i=0; i<command.length(); i++){
+        if (command[i]!=' '){
+            token+=command[i];
         }
-
-        // existing user
-        else
-        {
-            string exPass;
-            ifstream userPasswd(rootPassword);
-            ifstream userName(rootUsername);
-
-            getline(userPasswd, exPass);
-            getline(userName, username);
-
-            cout << "Enter the password - ";
-            getline(cin, password);
-
-            finaldecision = (exPass == password);
-            userName.close();
-            userPasswd.close();
-        }
-        return finaldecision;
-    }
-};
-
-int CClass::showRuncmdloop()
-{
-    return CClass::runingcmdloop;
-}
-
-void CClass ::welcomeStatement()
-{
-    if (CClass::startprogram == true)
-    {
-        time(&(CClass::computertime));
-        char buf[50];
-        cout << "Welcome to Command Console." << endl
-             << endl
-             << "Time: " << ctime_r(&(CClass::computertime), buf) << endl
-             << "(Type help for manual)\n\n";
-
-        bool login;
-        login = CClass::CheckAndLogin();
-        CClass::runingcmdloop = login;
-    }
-}
-
-void CClass::cmdTake()
-{
-    if (showRuncmdloop() == false)
-    {
-        cout << "Bye";
-    }
-
-    else
-    {
-        string command;
-        maincommands MC(true);
-
-        while (showRuncmdloop())
-        {
-            cout << "| (:-) " << CClass::username << " (root): [";
-            MC.pcd();
-            cout << "] $: ";
-            getline(cin, command);
-            Q.push(command);
-            if (command == "quit")
-                CClass::runingcmdloop = false;
-
-            else if (command == "hist")
-            {
-                queue<string> q = Q;
-
-                while (!q.empty())
-                {
-                    cout << "|\t" << q.front() << endl;
-                    q.pop();
-                }
-            }
-
-            else if (command == "cnge")
-            {
-                MC.rootChange();
-            }
-
-            else if (command == "help")
-            {
-                MC.help();
-            }
-
-            else if (command == "pcwd")
-            {
-                MC.pcd();
-                cout << endl;
-            }
-
-            else if (command == "list")
-            {
-                MC.list();
-            }
-
-            else if (command == "clr")
-            {
-                MC.clearScreen();
-            }
-
-            else if (command == "ccwd")
-            {
-                MC.ccwd();
-            }
-
-            else if (command == "time")
-            {
-                MC.gettime();
-            }
-
-            else if (command == "make")
-            {
-                MC.make();
-            }
-
-            else if (command == "wrte")
-            {
-                MC.wrte();
-            }
-
-            else if (command == "wrta")
-            {
-                MC.wrta();
-            }
-
-            else if (command == "remo")
-            {
-                MC.remo();
-            }
-
-            else if (command == "mkdr")
-            {
-                MC.mkdr();
-            }
-
-            else if (command == "rmdr")
-            {
-                MC.rmdr();
-            }
-
-            else if (command == "info")
-            {
-                MC.info();
-            }
-
-            else if (command == "read")
-            {
-                MC.read();
-            }
-
-            else if (command == "cfile")
-            {
-                MC.copyfile();
-            }
-
-            else if (command == "sys")
-            {
-                int a = MC.info_system();
-            }
-
-            else if (command == "echo")
-            {
-                MC.echo();
-            }
-
-            else if (command == "root")
-            {
-                MC.rootDisplay();
-            }
-
-            else if (command == "rfile")
-            {
-                MC.renameFile();
-            }
-
-            else if (command == "rdr")
-            {
-                MC.renameDir();
-            }
-
-            else if (command == "getf")
-            {
-                MC.getf();
-            }
-
-            else if (command == "findf")
-            {
-                MC.findf();
-            }
-
-            else if (command == "calc")
-            {
-                MC.calc();
-            }
-
-            else if (command == "game")
-            {
-                char gdec;
-                cout << "Do you want to play the game (y/n) - ";
-                cin.sync();
-                cin >> gdec;
-                if (gdec == 'y')
-                {
-                    cricket CG(1);
-                    CG.cricketGame();
-                }
-                else if (gdec == 'n')
-                {
-                    cricket CG(0);
-                    CG.cricketGame();
-                }
-                else
-                    cout << "Put the right command\n";
-            }
-
-            else if (command == "ipad")
-            {
-                ipad();
-            }
-            else
-            {
-                cout << "|\tGIVE THE RIGHT COMMAND :}>" << endl;
+        else{
+            if (token.size() != 0){
+                tokens.push_back(token);
+                token.clear();
             }
         }
     }
+    if (token.size()!=0) tokens.push_back(token);
+
+    return tokens;
 }
 
-int main()
-{
-    CClass Mainterminal(true);
-    Mainterminal.welcomeStatement();
-    Mainterminal.cmdTake();
 
+int main(){
+    CentralDogma core;
+
+    // registering the commands
+    core.registerCommand("say", std::make_unique<Say>());
+    core.registerCommand("help", std::make_unique<Help>(core));
+    core.registerCommand("calc", std::make_unique<Calculate>());
+    core.registerCommand("time", std::make_unique<Time>());
+    core.registerCommand("clear", std::make_unique<Clear>());
+    core.registerCommand("jump", std::make_unique<ChangeDirectory>());
+    core.registerCommand("forge", std::make_unique<MakeDirectory>());
+    core.registerCommand("show", std::make_unique<Show>());
+    core.registerCommand("erase", std::make_unique<Erase>());
+    core.registerCommand("craft", std::make_unique<Craft>());
+    core.registerCommand("view", std::make_unique<View>());
+    core.registerCommand("shift", std::make_unique<Shift>());
+    core.registerCommand("history", std::make_unique<History>(core));
+
+
+    // getting credentials
+    std::string username, password;
+    username = core.getUsername();
+
+    std::string command;
+    while (true) {
+        std::string cwd = core.workingDirectory();
+        std::cout << "[EVA-01]::"<<username<<" " << cwd << ">";
+
+        std::getline(std::cin, command);
+        std::vector<std::string> args = split(command);
+
+        if (args[0] == "exit") break;
+
+        if (!core.parseCommand(args)) {
+            std::cout << "Unknown command: " << args[0] << "\n";
+        }
+    }
     return 0;
 }
