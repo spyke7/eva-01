@@ -7,7 +7,7 @@
 ![](https://img.shields.io/github/license/spyke7/eva-01)
 ![](https://img.shields.io/github/issues/spyke7/eva-01)
 
-# **Heavily under construction. Transitioning completey to c++ and also changing the code structure. It will be gonna based on the neon genesis evangelion anime. The main parse command is still being written but all other required commands are writted**
+# **Heavily under construction. Transitioning completey to c++ and also changing the code structure. It will be gonna based on the neon genesis evangelion anime. The main parse command is still being written but all other required commands are written**
 
 
 <p align="left"> <a href="https://www.gnu.org/software/bash/" target="_blank"> <img src="https://www.vectorlogo.zone/logos/gnu_bash/gnu_bash-icon.svg" alt="bash" width="40" height="40"/> </a>
