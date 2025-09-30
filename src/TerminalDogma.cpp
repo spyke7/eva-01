@@ -207,7 +207,6 @@ void Calculate::execute(const std::vector<std::string> &args)
 
     if (expression.size() > 2)
     {
-
         bool safety = true;
         long long nbraces = 0;
 
@@ -566,7 +565,6 @@ void Show ::execute(const std::vector<std::string> &args)
 {
     if (args.size() < 2)
     {
-
         char cwd[1024];
         if (getcwd(cwd, sizeof(cwd)) != nullptr)
         {
@@ -657,6 +655,5 @@ void History :: execute(const std::vector<std::string> &args){
             }
             std::cout<<"\n";
         }
-        
     }
 }
