@@ -136,5 +136,5 @@ class History : public TerminalDogma
 public:
     History(CentralDogma &c) : core(c) {};
     void execute(const std::vector<std::string> &args) override;
-    std::string description() const override { return "Searches commands from history."; };
+    std::string description() const override { return "It shows all the previous commands executed and also searches commands related with command name(s) given.\n\tTo run a particular command from history with their index - !<index_number>"; };
 };

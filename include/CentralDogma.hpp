@@ -21,7 +21,6 @@ private:
     // history parts
     std::vector<std::vector<std::string>> historyList;
 
-    std::string configPath;
     std::string username;
 
 public:

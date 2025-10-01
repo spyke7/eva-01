@@ -7,14 +7,11 @@
 ![](https://img.shields.io/github/license/spyke7/eva-01)
 ![](https://img.shields.io/github/issues/spyke7/eva-01)
 
-# **Heavily under construction. Transitioning completey to c++ and also changing the code structure. It will be gonna based on the neon genesis evangelion anime. The main parse command is still being written but all other required commands are written**
-
-
 <p align="left"> <a href="https://www.gnu.org/software/bash/" target="_blank"> <img src="https://www.vectorlogo.zone/logos/gnu_bash/gnu_bash-icon.svg" alt="bash" width="40" height="40"/> </a>
 
 <div align="center">
 <h1 align="center">🟣 EVA-01 Shell</h1>
-The **Eva-01 Shell** is an immersive CLI experience.  
+The <b>Eva-01 Shell</b> is an immersive CLI experience.  
 Inspired by **NERV and EVAs** from _Neon Genesis Evangelion_.
 
 Eva-01 features:
@@ -36,7 +33,6 @@ Eva-01 features:
       <ul>
         <li><a href="#commands">COMMANDS</a></li>
 		<li><a href="#internet">INTERNET</a></li>
-		<li><a href="#important">IMPORTANT</a></li>
       </ul>
     </li>
     <li><a href="#getting-sarted">GETTING STARTED</a>
@@ -44,7 +40,6 @@ Eva-01 features:
 			<li><a href=#screenshot>SCREENSHOT</a>
 		</ul>
 	</li>
-    <li><a href="#history">HISTORY</a></li>
     <li><a href="#contributing">CONTRIBUTING</a></li>
     <li><a href="#support">SUPPORT</a></li>
     <li><a href="#license">LICENSE</a></li>
@@ -55,7 +50,6 @@ Eva-01 features:
 
 - Light Weight
 - Fast
-- Secure
 - Cross-Platform
 - User friendly
 
@@ -63,7 +57,27 @@ Eva-01 features:
 
 ## **Documentation**
 
+I have seen the **Neon Genesis Evangelion** anime by Hideaki Anno, and was really moved by the concepts of EVAs. EVA-01 run by the protagonist was a special one for me as it could change to berserk mode and many other different capabilites. Also, I was moved by the NERV HQ as mentioned in anime and its computer system having central dogma and terminal dogma.
+</br>
+
+Based on this computer system mentioned in anime, the eva-01 also has two header files - `CentralDogma.hpp` and `TerminalDogma.hpp`. 
+### **About the CentralDogma**
+- The main `parseCommand()` function, is used to execute commands, store them in history, also the logic for `||`,`;`, and `&&` are implemented. Along with that the command to run a command from history with its index is also implemented - `!<index_number>`
+- Inside it has a registry keeping the records of the commands along with the names with which they will be called. The registry filling is done inside the main function.
+- `searchHistory()` function is used by `history` function inside the `TerminalDogma` to search particular commands with related names.
+
+### **About the TerminalDogma**
+
+- It has a brief abstract base class for all eva-01 shell commands. It defines the common interface for every shell command. Each command has its own behaviour in `execute()` and the `description()` is written inside the header file only.
+- All the commands implemented inside it are described in the commands section.
+- For the `calc()` function many other functions like `isNumber()`, `isLeftAssociative()`, `precedence()`, `postfix()` - to change infix to postfix along with brackets, `solvePostfix()` are implemented.
+  
+
 ### Commands:
+- [x] history - It shows all the previous commands executed and also searches commands related with command name(s) given. To run a particular command from history with their index - `!<index_number>`
+- [x] shift - Moves and renames files/folders. `shift <file1> <folder1/file1>` or `shift <folder2/folder3> <folder4/folder3>`
+        You need to give the name of the file/folder along with the destination you want to move.
+        For renaming you just need to give a new name in the second arguement.
 - [x] view - Displays the content of the files. `view <file1> <file2> <...>`
 - [x] time - It just shows you the time.
 - [x] forge - It makes directory. Command - `forge <directory1> <directory2> <...>`

@@ -644,6 +644,7 @@ void History :: execute(const std::vector<std::string> &args){
         for (int i=1; i<args.size(); i++){
             core.searchHistory(args[i]);
         }
+        
     }else{
         std::vector<std::vector<std::string>> commandList = core.getHistory();
         for (int i = 0; i < commandList.size(); i++)

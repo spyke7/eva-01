@@ -58,7 +58,7 @@ int main(){
         if (args[0] == "exit") break;
 
         if (!core.parseCommand(args)) {
-            std::cout << "Unknown command: " << args[0] << "\n";
+            std::cout << "Unknown command." <<"\n";
         }
     }
     return 0;

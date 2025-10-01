@@ -81,29 +81,38 @@ bool CentralDogma::parseCommand(const std::vector<std::string> &args)
     bool insideQuotes = false;
 
     // ; - executes all commands one after other, || - run the second command only if first fails, && - run the second if the first succeeds
-
+    // !<n> - executes the nth command from history.
+    // refining the args for double quotes and the rest of the operators. anything inside double quotes is considered to be a token.
     for (const std::string &token : args)
     {
         size_t i = 0;
-        while (i < token.size()) {
-            if (token[i] == '"' && !insideQuotes) {
+        while (i < token.size())
+        {
+            if (token[i] == '"' && !insideQuotes)
+            {
                 insideQuotes = true;
                 i++;
                 continue;
-            } else if (token[i] == '"' && insideQuotes) {
+            }
+            else if (token[i] == '"' && insideQuotes)
+            {
                 insideQuotes = false;
                 i++;
                 continue;
             }
 
             // checking for the operators when quotes are closed
-            if (!insideQuotes){
-                if (i+1<token.size() && ((token[i] == '&' && token[i + 1] == '&') || (token[i] == '|' && token[i + 1] == '|'))){
-                    if (!currentToken.empty()) {
+            if (!insideQuotes)
+            {
+                if (i + 1 < token.size() && ((token[i] == '&' && token[i + 1] == '&') || (token[i] == '|' && token[i + 1] == '|')))
+                {
+                    if (!currentToken.empty())
+                    {
                         currentCommand.push_back(currentToken);
                         currentToken.clear();
                     }
-                    if (!currentCommand.empty()) {
+                    if (!currentCommand.empty())
+                    {
                         commands.push_back(currentCommand);
                         currentCommand.clear();
                     }
@@ -111,13 +120,16 @@ bool CentralDogma::parseCommand(const std::vector<std::string> &args)
                     i += 2;
                     continue;
                 }
-                if (token[i] == ';') {
-                    if (!currentToken.empty()) {
+                if (token[i] == ';')
+                {
+                    if (!currentToken.empty())
+                    {
                         currentCommand.push_back(currentToken);
                         currentToken.clear();
                     }
 
-                    if (!currentCommand.empty()) {
+                    if (!currentCommand.empty())
+                    {
                         commands.push_back(currentCommand);
                         currentCommand.clear();
                     }
@@ -132,52 +144,135 @@ bool CentralDogma::parseCommand(const std::vector<std::string> &args)
         }
 
         // if inside quotes, adding a space to join with next token
-        if (insideQuotes) {
+        if (insideQuotes)
+        {
             currentToken.push_back(' ');
-        } else {
-            if (!currentToken.empty()) {
+        }
+        else
+        {
+            if (!currentToken.empty())
+            {
                 currentCommand.push_back(currentToken);
                 currentToken.clear();
             }
         }
     }
 
-    if (!currentToken.empty()) {
+    if (!currentToken.empty())
+    {
         currentCommand.push_back(currentToken);
         currentToken.clear();
     }
-    if (!currentCommand.empty()) {
+    if (!currentCommand.empty())
+    {
         commands.push_back(currentCommand);
     }
 
-    for (size_t i = 0; i < commands.size(); i++)
+    if (commandOperators.size() >= commands.size())
     {
-        for (size_t j = 0; j < commands[i].size(); j++)
+        return false;
+    }
+    else
+    {
+        bool finalRes = true;
+
+        // evaluating ; , ||, &&
+        for (size_t i = 0; i < commands.size(); i++)
         {
-            std::cout<<commands[i][j]<<" ";
+            if (commands[i][0][0] == '!')
+            {
+                bool validHistoryNumber = true;
+                int historyNumber;
+                if (commands[i].size() >= 2)
+                {
+                    validHistoryNumber = false;
+                }
+                if (validHistoryNumber)
+                {
+                    std::string historyNumToken = "";
+                    bool hasDecimal = false;
+                    for (size_t j = 1; j < commands[i][0].size(); j++)
+                    {
+                        historyNumToken += commands[i][0][j];
+                        if (commands[i][0][j] == '.')
+                        {
+                            if (!hasDecimal)
+                            {
+                                hasDecimal = true;
+                            }
+                            else
+                            {
+                                validHistoryNumber = false;
+                                break;
+                            }
+                        }
+                        else if (!isdigit(commands[i][0][j]))
+                        {
+                            validHistoryNumber = false;
+                            break;
+                        }
+                    }
+                    if (validHistoryNumber)
+                    {
+                        historyNumber = std::stoi(historyNumToken);
+                        if (!executeCommand(historyList[historyNumber-1][0], historyList[historyNumber-1]))
+                        {
+                            finalRes = false;
+                            std::cout << "Cannot run the below command - \n";
+                            for (size_t j = 0; j < historyList[historyNumber-1].size(); j++)
+                            {
+                                std::cout << historyList[historyNumber-1][j] << " ";
+                            }
+                            std::cout << "\n";
+                        }
+                        else
+                        {
+                            finalRes = true;
+                            continue;
+                        }
+                    }
+                }
+            }
+            if (!executeCommand(commands[i][0], commands[i]))
+            {
+                finalRes = false;
+                std::cout << "Cannot run the below command - \n";
+                for (size_t j = 0; j < commands[i].size(); j++)
+                {
+                    std::cout << commands[i][j] << " ";
+                }
+                std::cout << "\n";
+            }
+            else
+            {
+                finalRes = true;
+            }
+            if (i < commandOperators.size() && finalRes && commandOperators[i] == "||")
+            {
+                break;
+            }
+            if (i < commandOperators.size() && !finalRes && commandOperators[i] == "&&")
+            {
+                bool orOperatorFound = false;
+                // checking for any || or ;, so that to jump there and execute that and skip the left
+                for (size_t k = i; k < commandOperators.size(); ++k)
+                {
+                    if (commandOperators[k] == "||" || commandOperators[k] == ";")
+                    {
+                        i = k;
+                        orOperatorFound = true;
+                        break;
+                    }
+                }
+                if (!orOperatorFound)
+                {
+                    break;
+                }
+            }
         }
-        std::cout<<"\n";
-        
+        addToHistory(args);
+        return finalRes;
     }
-
-    for (size_t i = 0; i < commandOperators.size(); i++)
-    {
-        std::cout<<commandOperators[i]<<std::endl;
-        std::cout<<"\n";
-        
-    }
-    
-
-    // if (!executeCommand(args[0], args))
-    // {
-    //     addToHistory(args);
-    //     return false;
-    // }
-    // else
-    // {
-    //     addToHistory(args);
-    //     return true;
-    // }
 }
 
 std::vector<std::vector<std::string>> CentralDogma::getHistory()
