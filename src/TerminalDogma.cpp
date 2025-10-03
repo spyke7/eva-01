@@ -7,7 +7,7 @@ void Say ::execute(const std::vector<std::string> &args)
     std::string filePath;
     if (args[args.size() - 2] == ">>" && args.size() >= 4)
     {
-        if (args[1][0] == '"' && args[args.size() - 3][args[args.size() - 3].size() - 1] == '"' )
+        if (args[1][0] == '"' && args[args.size() - 3][args[args.size() - 3].size() - 1] == '"')
         {
             filePath = args[args.size() - 1];
         }
@@ -24,25 +24,30 @@ void Say ::execute(const std::vector<std::string> &args)
     else
     {
         std::string userText;
-        for (size_t i = 1; i <= args.size()-3; i++)
+        for (size_t i = 1; i <= args.size() - 3; i++)
         {
-            for (size_t j=0; j<args[i].size(); j++){
-                if ((i==1 && j==0) || (i==args.size()-3 && j==args[args.size()-3].size()-1)){
+            for (size_t j = 0; j < args[i].size(); j++)
+            {
+                if ((i == 1 && j == 0) || (i == args.size() - 3 && j == args[args.size() - 3].size() - 1))
+                {
                     continue;
                 }
-                else{
-                    userText+=args[i][j];
+                else
+                {
+                    userText += args[i][j];
                 }
             }
         }
-        std::cout<<userText<<"\n";
+        std::cout << userText << "\n";
         std::ofstream file(filePath, std::ios::app);
-        if (!file){
+        if (!file)
+        {
             std::fstream file(filePath, std::ios::out);
             file << userText;
         }
-        else{
-            file<<userText;
+        else
+        {
+            file << userText;
         }
         file.close();
     }
@@ -627,34 +632,228 @@ void View ::execute(const std::vector<std::string> &args)
     }
 }
 
-void Shift :: execute(const std::vector<std::string> &args){
-    if (args.size()!=3){
-        std::cout<<"shift takes 3 arguements\n";
+void Shift ::execute(const std::vector<std::string> &args)
+{
+    if (args.size() != 3)
+    {
+        std::cout << "shift takes 3 arguements\n";
     }
     std::string src = args[1];
     std::string dest = args[2];
 
-    if (rename(src.c_str(), dest.c_str())!=0){
-        std::cout<<"Unable to do the operation\n";
+    if (rename(src.c_str(), dest.c_str()) != 0)
+    {
+        std::cout << "Unable to do the operation\n";
     }
 }
 
-void History :: execute(const std::vector<std::string> &args){
-    if (args.size()>=2){
-        for (int i=1; i<args.size(); i++){
+void History ::execute(const std::vector<std::string> &args)
+{
+    if (args.size() >= 2)
+    {
+        for (int i = 1; i < args.size(); i++)
+        {
             core.searchHistory(args[i]);
         }
-        
-    }else{
+    }
+    else
+    {
         std::vector<std::vector<std::string>> commandList = core.getHistory();
         for (int i = 0; i < commandList.size(); i++)
         {
-            std::cout<<i+1<<".  ";
+            std::cout << i + 1 << ".  ";
             for (int j = 0; j < commandList[i].size(); j++)
             {
-                std::cout<<commandList[i][j]<<" ";
+                std::cout << commandList[i][j] << " ";
             }
-            std::cout<<"\n";
+            std::cout << "\n";
         }
+    }
+}
+
+void Sys ::PrintError(const TCHAR *msg)
+{
+#if defined(_WIN32) || defined(_WIN64)
+    TCHAR sysMsg[MAX_PATH] = {'\0'};
+    TCHAR *p = sysMsg;
+    DWORD eNum = ::GetLastError();
+
+    ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
+                        FORMAT_MESSAGE_IGNORE_INSERTS,
+                    nullptr, eNum,
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                    sysMsg, MAX_PATH, nullptr);
+
+    while (*p++)
+    {
+        if ((*p != 9 && *p < 32) || *p == 46)
+        {
+            *p = 0;
+            break;
+        }
+    }
+
+    _tprintf(TEXT("\n\t%s failed with error %d (%s)"), msg, eNum, sysMsg);
+
+    p = nullptr;
+#endif
+}
+
+void Sys ::SystemInfo()
+{
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+    auto ifs = std::ifstream("/proc/cpuinfo");
+    std::string line;
+    while (std::getline(ifs, line))
+    {
+        std::cout << line << '\n';
+    }
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+    const TCHAR *envVarStrings[] =
+        {
+            TEXT("OS         = %OS%"),
+            TEXT("PATH       = %PATH%"),
+            TEXT("HOMEPATH   = %HOMEPATH%"),
+            TEXT("TEMP       = %TEMP%")};
+
+#define ENV_VAR_STRING_COUNT (sizeof(envVarStrings) / sizeof(TCHAR *))
+#define INFO_BUFFER_SIZE 32767
+    TCHAR infoBuf[INFO_BUFFER_SIZE] = {'\0'};
+    DWORD i = 0;
+    DWORD bufCharCount = INFO_BUFFER_SIZE;
+
+    // Get and display the name of the computer.
+    if (!::GetComputerName(infoBuf, &bufCharCount))
+        PrintError(TEXT("GetComputerName"));
+    _tprintf(TEXT("\nComputer name:      %s"), infoBuf);
+
+    // Get and display the user name.
+    bufCharCount = INFO_BUFFER_SIZE;
+    if (!::GetUserName(infoBuf, &bufCharCount))
+        PrintError(TEXT("GetUserName"));
+    _tprintf(TEXT("\nUser name:          %s"), infoBuf);
+
+    // Get and display the system directory.
+    if (!::GetSystemDirectory(infoBuf, INFO_BUFFER_SIZE))
+        PrintError(TEXT("GetSystemDirectory"));
+    _tprintf(TEXT("\nSystem Directory:   %s"), infoBuf);
+
+    // Get and display the Windows directory.
+    if (!::GetWindowsDirectory(infoBuf, INFO_BUFFER_SIZE))
+        PrintError(TEXT("GetWindowsDirectory"));
+    _tprintf(TEXT("\nWindows Directory:  %s"), infoBuf);
+
+    // Expand and display a few environment variables.
+    _tprintf(TEXT("\n\nSmall selection of Environment Variables:"));
+    for (i = 0; i < ENV_VAR_STRING_COUNT; ++i)
+    {
+        bufCharCount = ::ExpandEnvironmentStrings(envVarStrings[i], infoBuf,
+                                                  INFO_BUFFER_SIZE);
+        if (bufCharCount > INFO_BUFFER_SIZE)
+            _tprintf(TEXT("\n\t(Buffer too small to expand: \"%s\")"),
+                     envVarStrings[i]);
+        else if (!bufCharCount)
+            PrintError(TEXT("ExpandEnvironmentStrings"));
+        else
+            _tprintf(TEXT("\n   %s"), infoBuf);
+    }
+    _tprintf(TEXT("\n\n"));
+
+#pragma comment(lib, "user32.lib")
+
+    SYSTEM_INFO siSysInfo;
+    GetSystemInfo(&siSysInfo);
+    printf("Hardware information: \n");
+    printf("  OEM ID: %u\n", siSysInfo.dwOemId);
+    printf("  Number of processors: %u\n",
+           siSysInfo.dwNumberOfProcessors);
+    printf("  Page size: %u\n", siSysInfo.dwPageSize);
+    printf("  Processor type: %u\n", siSysInfo.dwProcessorType);
+    printf("  Minimum application address: %lx\n",
+           siSysInfo.lpMinimumApplicationAddress);
+    printf("  Maximum application address: %lx\n",
+           siSysInfo.lpMaximumApplicationAddress);
+    printf("  Active processor mask: %u\n",
+           siSysInfo.dwActiveProcessorMask);
+#endif
+}
+
+#if defined(_WIN64) || defined(_WIN32)
+BOOL Sys ::GetProcessListWin()
+{
+    HANDLE hProcessSnap;
+    HANDLE hProcess;
+    PROCESSENTRY32 pe32;
+    DWORD dwPriorityClass;
+
+    // Take a snapshot of all processes in the system.
+    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE)
+    {
+        PrintError(TEXT("CreateToolhelp32Snapshot (of processes)"));
+        return (FALSE);
+    }
+
+    // Set the size of the structure before using it.
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    // Retrieve information about the first process,
+    // and exit if unsuccessful
+    if (!Process32First(hProcessSnap, &pe32))
+    {
+        PrintError(TEXT("Process32First")); // show cause of failure
+        CloseHandle(hProcessSnap);          // clean the snapshot object
+        return (FALSE);
+    }
+
+    do
+    {
+        _tprintf(TEXT("\n\n====================================================="));
+        _tprintf(TEXT("\nPROCESS NAME:  %s"), pe32.szExeFile);
+        _tprintf(TEXT("\n-------------------------------------------------------"));
+
+        // Retrieve the priority class.
+        dwPriorityClass = 0;
+        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
+        if (hProcess == NULL)
+            PrintError(TEXT("OpenProcess"));
+        else
+        {
+            dwPriorityClass = GetPriorityClass(hProcess);
+            if (!dwPriorityClass)
+                PrintError(TEXT("GetPriorityClass"));
+            CloseHandle(hProcess);
+        }
+
+        _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
+        _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
+        _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
+        _tprintf(TEXT("\n  Priority base     = %d"), pe32.pcPriClassBase);
+        if (dwPriorityClass)
+            _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);
+
+    } while (Process32Next(hProcessSnap, &pe32));
+
+    CloseHandle(hProcessSnap);
+    return (TRUE);
+}
+#endif
+
+void Sys ::execute(const std::vector<std::string> &args)
+{
+    if (args.size() < 2)
+    {
+        SystemInfo();
+        return;
+    }
+
+    if (args[1] == "-p")
+    {
+#if defined(_WIN64) || defined(_WIN32)
+        GetProcessListWin();
+#endif
+        std::cout << "\n";
     }
 }

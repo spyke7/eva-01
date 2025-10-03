@@ -12,8 +12,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fstream>
+#include <stdio.h>
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
+#include <windows.h>
+#include <tchar.h>
+#include <psapi.h>
+#include <tlhelp32.h>
 #endif
 
 class CentralDogma;
@@ -137,4 +142,16 @@ public:
     History(CentralDogma &c) : core(c) {};
     void execute(const std::vector<std::string> &args) override;
     std::string description() const override { return "It shows all the previous commands executed and also searches commands related with command name(s) given.\n\tTo run a particular command from history with their index - !<index_number>"; };
+};
+
+class Sys : public TerminalDogma
+{
+public:
+    void execute(const std::vector<std::string> &args) override;
+    std::string description() const override { return "It can be used to interact with the system and processes. Also it shows specific things related to the system.\n\tsys - shows system and hardware informations.\n\tsys -p - shows all the processes."; };
+#if defined(_WIN64) || defined(_WIN32)
+    BOOL GetProcessListWin();
+#endif
+    void PrintError(const TCHAR *msg);
+    void SystemInfo();
 };

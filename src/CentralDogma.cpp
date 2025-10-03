@@ -7,7 +7,7 @@ CentralDogma::CentralDogma()
 #if defined(_WIN32) || defined(_WIN64)
     char hostname[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD size = sizeof(hostname);
-    if (GetComputerNameA(hostname, &size))
+    if (GetUserNameA(hostname, &size))
     {
         username = std::string(hostname);
     }
@@ -176,9 +176,10 @@ bool CentralDogma::parseCommand(const std::vector<std::string> &args)
     {
         bool finalRes = true;
 
-        // evaluating ; , ||, &&
+        // evaluating ; , ||, &&, !<n>
         for (size_t i = 0; i < commands.size(); i++)
         {
+            bool historyRefer=false;
             if (commands[i][0][0] == '!')
             {
                 bool validHistoryNumber = true;
@@ -215,25 +216,32 @@ bool CentralDogma::parseCommand(const std::vector<std::string> &args)
                     if (validHistoryNumber)
                     {
                         historyNumber = std::stoi(historyNumToken);
-                        if (!executeCommand(historyList[historyNumber-1][0], historyList[historyNumber-1]))
+                        if (historyNumber < 1 || historyNumber > historyList.size())
                         {
-                            finalRes = false;
-                            std::cout << "Cannot run the below command - \n";
-                            for (size_t j = 0; j < historyList[historyNumber-1].size(); j++)
-                            {
-                                std::cout << historyList[historyNumber-1][j] << " ";
-                            }
-                            std::cout << "\n";
+                            validHistoryNumber = false;
                         }
-                        else
+                        if (validHistoryNumber)
                         {
-                            finalRes = true;
-                            continue;
+                            if (!executeCommand(historyList[historyNumber - 1][0], historyList[historyNumber - 1]))
+                            {
+                                finalRes = false;
+                                std::cout << "Cannot run the below command - \n";
+                                for (size_t j = 0; j < historyList[historyNumber - 1].size(); j++)
+                                {
+                                    std::cout << historyList[historyNumber - 1][j] << " ";
+                                }
+                                std::cout << "\n";
+                            }
+                            else
+                            {
+                                finalRes = true;
+                                historyRefer=true;
+                            }
                         }
                     }
                 }
             }
-            if (!executeCommand(commands[i][0], commands[i]))
+            if (!executeCommand(commands[i][0], commands[i]) && !historyRefer)
             {
                 finalRes = false;
                 std::cout << "Cannot run the below command - \n";

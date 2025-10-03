@@ -41,6 +41,7 @@ int main(){
     core.registerCommand("view", std::make_unique<View>());
     core.registerCommand("shift", std::make_unique<Shift>());
     core.registerCommand("history", std::make_unique<History>(core));
+    core.registerCommand("sys", std::make_unique<Sys>());
 
 
     // getting credentials

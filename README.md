@@ -71,6 +71,11 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - It has a brief abstract base class for all eva-01 shell commands. It defines the common interface for every shell command. Each command has its own behaviour in `execute()` and the `description()` is written inside the header file only.
 - All the commands implemented inside it are described in the commands section.
 - For the `calc()` function many other functions like `isNumber()`, `isLeftAssociative()`, `precedence()`, `postfix()` - to change infix to postfix along with brackets, `solvePostfix()` are implemented.
+- `sys()` - 
+  - For windows (took help from [](learn.microsoft.com), all the link are provided for the documentation of specific functions) - 
+    1. For the harware information  - [getting harware information](https://learn.microsoft.com/en-us/windows/win32/sysinfo/getting-hardware-information)
+    2. For the system information - [getting system information](https://learn.microsoft.com/en-us/windows/win32/sysinfo/getting-system-information)
+    3. For getting the processes - [taking snapshot and view process](https://learn.microsoft.com/en-us/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes)
   
 
 ### Commands:
@@ -81,6 +86,9 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - [x] view - Displays the content of the files. `view <file1> <file2> <...>`
 - [x] time - It just shows you the time.
 - [x] forge - It makes directory. Command - `forge <directory1> <directory2> <...>`
+- [x] sys - It can be used to interact with the system and processes. Also it shows specific things related to the system.
+        `sys` - shows system and hardware informations.
+        `sys -p` - shows all the processes.
 - [x] calc - Just a simple calculator.
 - [x] say - Prints text to the console and also write and appends text into files which are in double quotes only
          and ends with >> and file name with proper space. `say <text>` or `say <"text"> >> <filename>`
@@ -105,6 +113,19 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 ## <br/>
 
 ## **GETTING STARTED**
+Run (windows only)- 
+`g++ -Iinclude src\main.cpp src\CentralDogma.cpp src\TerminalDogma.cpp -lPsapi -lkernel32 -ladvapi32 -o eva-01`
+then run the eva-01.exe
+
+or 
+
+`mingw32-make` or `make` to run the makefile
+
+Run (linux/unix) - 
+`g++ -Iinclude src\main.cpp src\CentralDogma.cpp src\TerminalDogma.cpp -o eva-01`
+then run the eva-01.o
+
+*Some functionalities are not yet developed for linux*
 
 
 ## **CONTIBUTING**
