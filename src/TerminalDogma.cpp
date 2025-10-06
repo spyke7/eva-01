@@ -839,6 +839,220 @@ BOOL Sys ::GetProcessListWin()
     CloseHandle(hProcessSnap);
     return (TRUE);
 }
+
+// for network
+void Sys ::GetNetworkInfoWin()
+{
+    FIXED_INFO *pFixedInfo;
+    IP_ADDR_STRING *pIPAddr;
+
+    ULONG ulOutBufLen;
+    DWORD dwRetVal;
+
+    pFixedInfo = (FIXED_INFO *)malloc(sizeof(FIXED_INFO));
+    ulOutBufLen = sizeof(FIXED_INFO);
+
+    // initial call to GetNetworkParams to get the size required for the ulOutBufLen variable
+    if (GetNetworkParams(pFixedInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW)
+    {
+        free(pFixedInfo);
+        pFixedInfo = (FIXED_INFO *)malloc(ulOutBufLen);
+        if (pFixedInfo == NULL)
+        {
+            printf("Error allocating memory needed to call GetNetworkParams\n");
+        }
+    }
+
+    // using general error checking and returning its value to the DWORD variable dwRetVal
+    if (dwRetVal = GetNetworkParams(pFixedInfo, &ulOutBufLen) != NO_ERROR)
+    {
+        printf("GetNetworkParams failed with error %d\n", dwRetVal);
+        if (pFixedInfo)
+        {
+            free(pFixedInfo);
+        }
+    }
+
+    // showing data from pFixedInfo data structure
+    printf("\tHost Name: %s\n", pFixedInfo->HostName);
+    printf("\tDomain Name: %s\n", pFixedInfo->DomainName);
+    printf("\tDNS Servers:\n");
+    printf("\t\t%s\n", pFixedInfo->DnsServerList.IpAddress.String);
+
+    pIPAddr = pFixedInfo->DnsServerList.Next;
+    while (pIPAddr)
+    {
+        printf("\t\t%s\n", pIPAddr->IpAddress.String);
+        pIPAddr = pIPAddr->Next;
+    }
+
+    printf("\tNode Type: ");
+    switch (pFixedInfo->NodeType)
+    {
+    case 1:
+        printf("%s\n", "Broadcast");
+        break;
+    case 2:
+        printf("%s\n", "Peer to peer");
+        break;
+    case 4:
+        printf("%s\n", "Mixed");
+        break;
+    case 8:
+        printf("%s\n", "Hybrid");
+        break;
+    default:
+        printf("\n");
+    }
+
+    printf("\tNetBIOS Scope ID: %s\n", pFixedInfo->ScopeId);
+
+    if (pFixedInfo->EnableRouting)
+        printf("\tIP Routing Enabled: Yes\n");
+    else
+        printf("\tIP Routing Enabled: No\n");
+
+    if (pFixedInfo->EnableProxy)
+        printf("\tWINS Proxy Enabled: Yes\n");
+    else
+        printf("\tWINS Proxy Enabled: No\n");
+
+    if (pFixedInfo->EnableDns)
+        printf("\tNetBIOS Resolution Uses DNS: Yes\n");
+    else
+        printf("\tNetBIOS Resolution Uses DNS: No\n");
+
+    if (pFixedInfo)
+    {
+        free(pFixedInfo);
+        pFixedInfo = NULL;
+    }
+}
+
+// showing adapter information
+void Sys::GetAdapterInfoWin()
+{
+    IP_ADAPTER_INFO *pAdapterInfo;
+    ULONG ulOutBufLen;
+    DWORD dwRetVal;
+
+    pAdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
+    ulOutBufLen = sizeof(IP_ADAPTER_INFO);
+
+    // call to GetAdaptersInfo to get the size needed into the ulOutBufLen variable
+    if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) != ERROR_SUCCESS)
+    {
+        free(pAdapterInfo);
+        pAdapterInfo = (IP_ADAPTER_INFO *)malloc(ulOutBufLen);
+    }
+
+    // call to GetAdaptersInfo, passing pAdapterInfo and ulOutBufLen as parameters, returning its value to the DWORD variable dwRetVal
+    if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) != ERROR_SUCCESS)
+    {
+        printf("GetAdaptersInfo call failed with %d\n", dwRetVal);
+    }
+
+    PIP_ADAPTER_INFO pAdapter = pAdapterInfo;
+    while (pAdapter)
+    {
+        printf("Adapter Name: %s\n", pAdapter->AdapterName);
+        printf("Adapter Desc: %s\n", pAdapter->Description);
+        printf("\tAdapter Addr: \t");
+        for (UINT i = 0; i < pAdapter->AddressLength; i++)
+        {
+            if (i == (pAdapter->AddressLength - 1))
+                printf("%.2X\n", (int)pAdapter->Address[i]);
+            else
+                printf("%.2X-", (int)pAdapter->Address[i]);
+        }
+        printf("IP Address: %s\n", pAdapter->IpAddressList.IpAddress.String);
+        printf("IP Mask: %s\n", pAdapter->IpAddressList.IpMask.String);
+        printf("\tGateway: \t%s\n", pAdapter->GatewayList.IpAddress.String);
+        printf("\t***\n");
+        if (pAdapter->DhcpEnabled)
+        {
+            printf("\tDHCP Enabled: Yes\n");
+            printf("\t\tDHCP Server: \t%s\n", pAdapter->DhcpServer.IpAddress.String);
+        }
+        else
+            printf("\tDHCP Enabled: No\n");
+
+        pAdapter = pAdapter->Next;
+    }
+
+    if (pAdapterInfo)
+    {
+        free(pAdapterInfo);
+    }
+}
+#endif
+
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+pid_t Sys::GetPIDbyName(const char *cchrptr_ProcessName, int intCaseSensitiveness, int intExactMatch)
+{
+    char chrarry_CommandLinePath[100];
+    char chrarry_NameOfProcess[300];
+    char *chrptr_StringToCompare = NULL;
+    pid_t pid_ProcessIdentifier = (pid_t)-1;
+    struct dirent *de_DirEntity = NULL;
+    DIR *dir_proc = NULL;
+
+    int (*CompareFunction)(const char *, const char *, int);
+
+    if (intExactMatch)
+        CompareFunction = &strcmp_Wrapper;
+    else
+        CompareFunction = &strstr_Wrapper;
+
+    dir_proc = opendir(PROC_DIRECTORY);
+    if (dir_proc == NULL)
+    {
+        perror("Couldn't open the " PROC_DIRECTORY " directory");
+        return (pid_t)-2;
+    }
+
+    // Loop while not NULL
+    while ((de_DirEntity = readdir(dir_proc)))
+    {
+        if (de_DirEntity->d_type == DT_DIR)
+        {
+            if (IsNumeric(de_DirEntity->d_name))
+            {
+                strcpy(chrarry_CommandLinePath, PROC_DIRECTORY);
+                strcat(chrarry_CommandLinePath, de_DirEntity->d_name);
+                strcat(chrarry_CommandLinePath, "/cmdline");
+                FILE *fd_CmdLineFile = fopen(chrarry_CommandLinePath, "rt"); // open the file for reading text
+                if (fd_CmdLineFile)
+                {
+                    fscanf(fd_CmdLineFile, "%s", chrarry_NameOfProcess); // read from /proc/<NR>/cmdline
+                    fclose(fd_CmdLineFile);                              // close the file prior to exiting the routine
+
+                    if (strrchr(chrarry_NameOfProcess, '/'))
+                        chrptr_StringToCompare = strrchr(chrarry_NameOfProcess, '/') + 1;
+                    else
+                        chrptr_StringToCompare = chrarry_NameOfProcess;
+
+                    // printf("Process name: %s\n", chrarry_NameOfProcess);
+                    // printf("Pure Process name: %s\n", chrptr_StringToCompare );
+
+                    if (CompareFunction(chrptr_StringToCompare, cchrptr_ProcessName, intCaseSensitiveness))
+                    {
+                        pid_ProcessIdentifier = (pid_t)atoi(de_DirEntity->d_name);
+                        closedir(dir_proc);
+                        return pid_ProcessIdentifier;
+                    }
+                }
+            }
+        }
+    }
+    closedir(dir_proc);
+    return pid_ProcessIdentifier;
+}
+
+pid_t Sys ::GetPIDbyName(const char *cchrptr_ProcessName)
+{
+    return GetPIDbyName(cchrptr_ProcessName, CASE_INSENSITIVE, EXACT_MATCH);
+}
 #endif
 
 void Sys ::execute(const std::vector<std::string> &args)
@@ -854,6 +1068,24 @@ void Sys ::execute(const std::vector<std::string> &args)
 #if defined(_WIN64) || defined(_WIN32)
         GetProcessListWin();
 #endif
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+        pid_t pid = GetPIDbyName("bash");
+        printf("PID %d\n", pid);
+#endif
         std::cout << "\n";
+    }
+
+    if (args[1] == "-n")
+    {
+#if defined(_WIN64) || defined(_WIN32)
+        GetNetworkInfoWin();
+#endif
+    }
+
+    if (args[1] == "-a")
+    {
+#if defined(_WIN64) || defined(_WIN32)
+        GetAdapterInfoWin();
+#endif
     }
 }

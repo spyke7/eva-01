@@ -13,12 +13,19 @@
 #include <sys/types.h>
 #include <fstream>
 #include <stdio.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <cstdarg>
+#include <cstdlib>
+#include <cstring>
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
 #include <windows.h>
 #include <tchar.h>
 #include <psapi.h>
 #include <tlhelp32.h>
+#include <winsock2.h>
+#include <iphlpapi.h>
 #endif
 
 class CentralDogma;
@@ -149,9 +156,47 @@ class Sys : public TerminalDogma
 public:
     void execute(const std::vector<std::string> &args) override;
     std::string description() const override { return "It can be used to interact with the system and processes. Also it shows specific things related to the system.\n\tsys - shows system and hardware informations.\n\tsys -p - shows all the processes."; };
+
+    // for getting process in windows
 #if defined(_WIN64) || defined(_WIN32)
     BOOL GetProcessListWin();
 #endif
     void PrintError(const TCHAR *msg);
     void SystemInfo();
+
+// for getting process in linux/unix
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+    int IsNumeric(const char *ccharptr_CharacterList)
+    {
+        for (; *ccharptr_CharacterList; ccharptr_CharacterList++)
+            if (*ccharptr_CharacterList < '0' || *ccharptr_CharacterList > '9')
+                return 0; // false
+        return 1;         // true
+    }
+    int strcmp_Wrapper(const char *s1, const char *s2, int intCaseSensitive)
+    {
+        if (intCaseSensitive)
+            return !strcmp(s1, s2);
+        else
+            return !strcasecmp(s1, s2);
+    }
+
+    int strstr_Wrapper(const char *haystack, const char *needle, int intCaseSensitive)
+    {
+        if (intCaseSensitive)
+            return (int)strstr(haystack, needle);
+        else
+            return (int)strcasestr(haystack, needle);
+    }
+    pid_t GetPIDbyName(const char *cchrptr_ProcessName, int intCaseSensitiveness, int intExactMatch);
+    pid_t GetPIDbyName(const char *cchrptr_ProcessName);
+#endif
+
+    // for network
+#if defined(_WIN64) || defined(_WIN32)
+    void GetNetworkInfoWin();
+
+    // shows network adapters and other adapters as well.
+    void GetAdapterInfoWin();
+#endif
 };

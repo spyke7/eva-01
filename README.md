@@ -72,10 +72,11 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - All the commands implemented inside it are described in the commands section.
 - For the `calc()` function many other functions like `isNumber()`, `isLeftAssociative()`, `precedence()`, `postfix()` - to change infix to postfix along with brackets, `solvePostfix()` are implemented.
 - `sys()` - 
-  - For windows (took help from [](learn.microsoft.com), all the link are provided for the documentation of specific functions) - 
+  - For windows (took help from [learn.microsoft.com](learn.microsoft.com), all the link are provided for the documentation of specific functions) - 
     1. For the harware information  - [getting harware information](https://learn.microsoft.com/en-us/windows/win32/sysinfo/getting-hardware-information)
     2. For the system information - [getting system information](https://learn.microsoft.com/en-us/windows/win32/sysinfo/getting-system-information)
     3. For getting the processes - [taking snapshot and view process](https://learn.microsoft.com/en-us/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes)
+    4. For getting the information of DNS server, adapters information - [ip helper from microsoft](https://learn.microsoft.com/en-us/windows/win32/iphlp/getting-started-with-ip-helper?redirectedfrom=MSDN)
   
 
 ### Commands:
@@ -122,7 +123,7 @@ or
 `mingw32-make` or `make` to run the makefile
 
 Run (linux/unix) - 
-`g++ -Iinclude src\main.cpp src\CentralDogma.cpp src\TerminalDogma.cpp -o eva-01`
+`g++ -Iinclude src\main.cpp src\CentralDogma.cpp src\TerminalDogma.cpp -lPsapi -lkernel32 -ladvapi32 -lws2_32 -liphlpapi -o eva-01`
 then run the eva-01.o
 
 *Some functionalities are not yet developed for linux*
@@ -136,9 +137,9 @@ If you have a suggestion that would make this better, please fork the repo and c
 Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b CommandConsole`)
+2. Create your Feature Branch (`git checkout -b eva-01`)
 3. Commit your Changes (`git commit -m 'Add some advices'`)
-4. Push to the Branch (`git push origin CommandConsole`)
+4. Push to the Branch (`git push origin eva-01`)
 5. Open a Pull Request
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
