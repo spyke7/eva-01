@@ -160,8 +160,8 @@ public:
     // for getting process in windows
 #if defined(_WIN64) || defined(_WIN32)
     BOOL GetProcessListWin();
-#endif
     void PrintError(const TCHAR *msg);
+#endif
     void SystemInfo();
 
 // for getting process in linux/unix
@@ -198,5 +198,10 @@ public:
 
     // shows network adapters and other adapters as well.
     void GetAdapterInfoWin();
+#endif
+
+    // for getting network informations and adapters information in linux and other processes
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+    void GetNetworkInfoUnix();
 #endif
 };

@@ -671,34 +671,6 @@ void History ::execute(const std::vector<std::string> &args)
     }
 }
 
-void Sys ::PrintError(const TCHAR *msg)
-{
-#if defined(_WIN32) || defined(_WIN64)
-    TCHAR sysMsg[MAX_PATH] = {'\0'};
-    TCHAR *p = sysMsg;
-    DWORD eNum = ::GetLastError();
-
-    ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
-                        FORMAT_MESSAGE_IGNORE_INSERTS,
-                    nullptr, eNum,
-                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                    sysMsg, MAX_PATH, nullptr);
-
-    while (*p++)
-    {
-        if ((*p != 9 && *p < 32) || *p == 46)
-        {
-            *p = 0;
-            break;
-        }
-    }
-
-    _tprintf(TEXT("\n\t%s failed with error %d (%s)"), msg, eNum, sysMsg);
-
-    p = nullptr;
-#endif
-}
-
 void Sys ::SystemInfo()
 {
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
@@ -781,6 +753,34 @@ void Sys ::SystemInfo()
 }
 
 #if defined(_WIN64) || defined(_WIN32)
+void Sys ::PrintError(const TCHAR *msg)
+{
+    TCHAR sysMsg[MAX_PATH] = {'\0'};
+    TCHAR *p = sysMsg;
+    DWORD eNum = ::GetLastError();
+
+    ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
+                        FORMAT_MESSAGE_IGNORE_INSERTS,
+                    nullptr, eNum,
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                    sysMsg, MAX_PATH, nullptr);
+
+    while (*p++)
+    {
+        if ((*p != 9 && *p < 32) || *p == 46)
+        {
+            *p = 0;
+            break;
+        }
+    }
+
+    _tprintf(TEXT("\n\t%s failed with error %d (%s)"), msg, eNum, sysMsg);
+
+    p = nullptr;
+}
+
+
+// getting procesess
 BOOL Sys ::GetProcessListWin()
 {
     HANDLE hProcessSnap;
