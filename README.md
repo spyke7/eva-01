@@ -123,8 +123,7 @@ or
 `mingw32-make` or `make` to run the makefile
 
 Run (linux/unix) - 
-`g++ -Iinclude src\main.cpp src\CentralDogma.cpp src\TerminalDogma.cpp -lPsapi -lkernel32 -ladvapi32 -lws2_32 -liphlpapi -o eva-01`
-then run the eva-01.o
+Still there are some issues for running it in linux. It will be fixed shortly.
 
 *Some functionalities are not yet developed for linux*
 
