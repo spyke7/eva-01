@@ -800,41 +800,44 @@ BOOL Sys ::GetProcessListWin()
     pe32.dwSize = sizeof(PROCESSENTRY32);
 
     // Retrieve information about the first process,
-    // and exit if unsuccessful
     if (!Process32First(hProcessSnap, &pe32))
     {
-        PrintError(TEXT("Process32First")); // show cause of failure
-        CloseHandle(hProcessSnap);          // clean the snapshot object
+        PrintError(TEXT("Process32First"));
+        CloseHandle(hProcessSnap);
         return (FALSE);
     }
-
-    do
+    else
     {
-        _tprintf(TEXT("\n\n====================================================="));
-        _tprintf(TEXT("\nPROCESS NAME:  %s"), pe32.szExeFile);
-        _tprintf(TEXT("\n-------------------------------------------------------"));
-
-        // Retrieve the priority class.
-        dwPriorityClass = 0;
-        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
-        if (hProcess == NULL)
-            PrintError(TEXT("OpenProcess"));
-        else
+        while (Process32Next(hProcessSnap, &pe32))
         {
-            dwPriorityClass = GetPriorityClass(hProcess);
-            if (!dwPriorityClass)
-                PrintError(TEXT("GetPriorityClass"));
-            CloseHandle(hProcess);
+
+            _tprintf(TEXT("\nPROCESS NAME:  %s"), pe32.szExeFile);
+            _tprintf(TEXT("\n-------------------------------------------------------"));
+
+            // Retrieve the priority class.
+            dwPriorityClass = 0;
+            hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
+            if (hProcess == NULL)
+                PrintError(TEXT("OpenProcess"));
+            else
+            {
+                dwPriorityClass = GetPriorityClass(hProcess);
+                if (!dwPriorityClass)
+                    PrintError(TEXT("GetPriorityClass"));
+                CloseHandle(hProcess);
+            }
+            
+            _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
+            _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
+            _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
+            _tprintf(TEXT("\n  Priority base     = %d"), pe32.pcPriClassBase);
+            if (dwPriorityClass)
+                _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);
+
+            std::cout<<"\n=======================================================\n";
         }
-
-        _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
-        _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
-        _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
-        _tprintf(TEXT("\n  Priority base     = %d"), pe32.pcPriClassBase);
-        if (dwPriorityClass)
-            _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);
-
-    } while (Process32Next(hProcessSnap, &pe32));
+    }
+    
 
     CloseHandle(hProcessSnap);
     return (TRUE);
@@ -874,19 +877,19 @@ void Sys ::GetNetworkInfoWin()
     }
 
     // showing data from pFixedInfo data structure
-    printf("\tHost Name: %s\n", pFixedInfo->HostName);
-    printf("\tDomain Name: %s\n", pFixedInfo->DomainName);
-    printf("\tDNS Servers:\n");
-    printf("\t\t%s\n", pFixedInfo->DnsServerList.IpAddress.String);
+    printf("Host Name: %s\n", pFixedInfo->HostName);
+    printf("Domain Name: %s\n", pFixedInfo->DomainName);
+    printf("DNS Servers:\n");
+    printf("\t%s\n", pFixedInfo->DnsServerList.IpAddress.String);
 
     pIPAddr = pFixedInfo->DnsServerList.Next;
     while (pIPAddr)
     {
-        printf("\t\t%s\n", pIPAddr->IpAddress.String);
+        printf("\t%s\n", pIPAddr->IpAddress.String);
         pIPAddr = pIPAddr->Next;
     }
 
-    printf("\tNode Type: ");
+    printf("Node Type: ");
     switch (pFixedInfo->NodeType)
     {
     case 1:
@@ -905,28 +908,59 @@ void Sys ::GetNetworkInfoWin()
         printf("\n");
     }
 
-    printf("\tNetBIOS Scope ID: %s\n", pFixedInfo->ScopeId);
+    printf("NetBIOS Scope ID: %s\n", pFixedInfo->ScopeId);
 
     if (pFixedInfo->EnableRouting)
-        printf("\tIP Routing Enabled: Yes\n");
+        printf("IP Routing Enabled: Yes\n");
     else
-        printf("\tIP Routing Enabled: No\n");
+        printf("IP Routing Enabled: No\n");
 
     if (pFixedInfo->EnableProxy)
-        printf("\tWINS Proxy Enabled: Yes\n");
+        printf("WINS Proxy Enabled: Yes\n");
     else
-        printf("\tWINS Proxy Enabled: No\n");
+        printf("WINS Proxy Enabled: No\n");
 
     if (pFixedInfo->EnableDns)
-        printf("\tNetBIOS Resolution Uses DNS: Yes\n");
+        printf("NetBIOS Resolution Uses DNS: Yes\n");
     else
-        printf("\tNetBIOS Resolution Uses DNS: No\n");
+        printf("NetBIOS Resolution Uses DNS: No\n");
 
     if (pFixedInfo)
     {
         free(pFixedInfo);
         pFixedInfo = NULL;
     }
+
+    // printing ip, mask and broadcast address, IF index, and re assembly size
+    MIB_IPADDRTABLE *pIPAddrTable;
+    DWORD dwSize = 0;
+
+    pIPAddrTable = (MIB_IPADDRTABLE *)malloc(sizeof(MIB_IPADDRTABLE));
+    if (GetIpAddrTable(pIPAddrTable, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER)
+    {
+        free(pIPAddrTable);
+        pIPAddrTable = (MIB_IPADDRTABLE *)malloc(dwSize);
+    }
+    if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR)
+    {
+        printf("GetIpAddrTable call failed with %d\n", dwRetVal);
+    }
+
+    // IPAddrTable->table[0].dwAddr stores address in network byte order
+    // changing it to dotted format
+    IN_ADDR ipaddr, broadaddr, maskaddr;
+    ipaddr.S_un.S_addr = pIPAddrTable->table[0].dwAddr;
+    broadaddr.S_un.S_addr = pIPAddrTable->table[0].dwBCastAddr;
+    maskaddr.S_un.S_addr = pIPAddrTable->table[0].dwMask;
+
+    printf("IP Address:         %s\n", inet_ntoa(ipaddr));
+    printf("IP Mask:            %s\n", inet_ntoa(maskaddr));
+    printf("Broadcast Addr:     %s\n", inet_ntoa(broadaddr));
+    printf("IF Index:           %ld\n", pIPAddrTable->table[0].dwIndex);
+    printf("Re-assembly size:   %ld\n", pIPAddrTable->table[0].dwReasmSize);
+
+    if (pIPAddrTable)
+        free(pIPAddrTable);
 }
 
 // showing adapter information
@@ -957,7 +991,7 @@ void Sys::GetAdapterInfoWin()
     {
         printf("Adapter Name: %s\n", pAdapter->AdapterName);
         printf("Adapter Desc: %s\n", pAdapter->Description);
-        printf("\tAdapter Addr: \t");
+        printf("Adapter Addr: \t");
         for (UINT i = 0; i < pAdapter->AddressLength; i++)
         {
             if (i == (pAdapter->AddressLength - 1))
@@ -967,15 +1001,19 @@ void Sys::GetAdapterInfoWin()
         }
         printf("IP Address: %s\n", pAdapter->IpAddressList.IpAddress.String);
         printf("IP Mask: %s\n", pAdapter->IpAddressList.IpMask.String);
-        printf("\tGateway: \t%s\n", pAdapter->GatewayList.IpAddress.String);
-        printf("\t***\n");
+        printf("Gateway: \t%s\n", pAdapter->GatewayList.IpAddress.String);
+
         if (pAdapter->DhcpEnabled)
         {
-            printf("\tDHCP Enabled: Yes\n");
-            printf("\t\tDHCP Server: \t%s\n", pAdapter->DhcpServer.IpAddress.String);
+            printf("DHCP Enabled: Yes\n");
+            printf("\tDHCP Server: \t%s\n", pAdapter->DhcpServer.IpAddress.String);
         }
         else
-            printf("\tDHCP Enabled: No\n");
+        {
+            printf("DHCP Enabled: No\n");
+        }
+
+        printf("\n-----------\n");
 
         pAdapter = pAdapter->Next;
     }
@@ -1077,6 +1115,8 @@ void Sys ::execute(const std::vector<std::string> &args)
 
     if (args[1] == "-n")
     {
+        std::cout << "Network Informations\n"
+                  << "---------------------" << "\n";
 #if defined(_WIN64) || defined(_WIN32)
         GetNetworkInfoWin();
 #endif
@@ -1084,6 +1124,8 @@ void Sys ::execute(const std::vector<std::string> &args)
 
     if (args[1] == "-a")
     {
+        std::cout << "Adapter Informations\n"
+                  << "---------------------" << "\n";
 #if defined(_WIN64) || defined(_WIN32)
         GetAdapterInfoWin();
 #endif
