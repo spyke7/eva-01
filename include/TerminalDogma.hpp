@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <map>
 #include <string>
 #include <unordered_set>
 #include <stack>
@@ -18,6 +19,10 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
+#include <cctype>
+#include <sstream>
+#include <cstdarg>
+#include <cstdlib>
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
 #include <windows.h>
@@ -26,6 +31,17 @@
 #include <tlhelp32.h>
 #include <winsock2.h>
 #include <iphlpapi.h>
+#endif
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <netpacket/packet.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <sysexits.h>
+#include <cerrno>
+#include <arpa/inet.h>
 #endif
 
 class CentralDogma;
@@ -155,7 +171,7 @@ class Sys : public TerminalDogma
 {
 public:
     void execute(const std::vector<std::string> &args) override;
-    std::string description() const override { return "It can be used to interact with the system and processes. Also it shows specific things related to the system.\n\tsys - shows system and hardware informations.\n\tsys -p - shows all the processes."; };
+    std::string description() const override { return "It can be used to interact with the system and processes. Also it shows specific things related to the system.\n\tsys - shows system and hardware informations.\n\t -p | --proc - shows all the processes.\n\t -n | --network - shows information about your network and it's adapters.\n\t -a | --adapters - shows information about adapters."; };
 
     // for getting process in windows
 #if defined(_WIN64) || defined(_WIN32)
@@ -166,30 +182,15 @@ public:
 
 // for getting process in linux/unix
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
-    int IsNumeric(const char *ccharptr_CharacterList)
+    bool isNumeric(const std::string &s)
     {
-        for (; *ccharptr_CharacterList; ccharptr_CharacterList++)
-            if (*ccharptr_CharacterList < '0' || *ccharptr_CharacterList > '9')
-                return 0; // false
-        return 1;         // true
-    }
-    int strcmp_Wrapper(const char *s1, const char *s2, int intCaseSensitive)
-    {
-        if (intCaseSensitive)
-            return !strcmp(s1, s2);
-        else
-            return !strcasecmp(s1, s2);
+        for (char c : s)
+            if (!isdigit(c))
+                return false;
+        return !s.empty();
     }
 
-    int strstr_Wrapper(const char *haystack, const char *needle, int intCaseSensitive)
-    {
-        if (intCaseSensitive)
-            return (int)strstr(haystack, needle);
-        else
-            return (int)strcasestr(haystack, needle);
-    }
-    pid_t GetPIDbyName(const char *cchrptr_ProcessName, int intCaseSensitiveness, int intExactMatch);
-    pid_t GetPIDbyName(const char *cchrptr_ProcessName);
+    void GetProcessesUnix();
 #endif
 
     // for network
@@ -203,5 +204,6 @@ public:
     // for getting network informations and adapters information in linux and other processes
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
     void GetNetworkInfoUnix();
+    void GetAdapterInfoUnix();
 #endif
 };

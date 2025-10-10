@@ -393,7 +393,7 @@ void MakeDirectory ::execute(const std::vector<std::string> &args)
 {
     if (args.size() < 2)
     {
-        std::cout << "forge takes 2 or more arguements. See help.\n";
+        std::cout << "forge takes 1 or more arguements. See help.\n";
         return;
     }
 
@@ -423,50 +423,70 @@ void MakeDirectory ::execute(const std::vector<std::string> &args)
 
 #else
     size_t index = 1;
-    mode_t mode = 0755; // default permission
-    while (index < args.size() && args[index][0] == '-')
+    mode_t defaultMode = 0755; // default permission
+
+    std::map<std::string, int> nameAndModes;
+
+    while (index < args.size())
     {
-        if (args[index] == "-a")
+        if (index + 1 < args.size())
         {
-            mode = 0777; // access to all
-        }
-        else if (args[index] == "-s")
-        {
-            mode = 0700; // acess to owner only
+            if (args[index + 1][0] == '-')
+            {
+                mode_t mode;
+                if (args[index + 1] == "-a")
+                {
+                    mode = 0777; // access to all
+                }
+                else if (args[index + 1] == "-s")
+                {
+                    mode = 0700; // acess to owner only
+                }
+                else
+                {
+                    std::cout << "forge: unknown option " << args[index + 1] << "'\n";
+                    return;
+                }
+
+                nameAndModes[args[index]] = mode;
+                index++;
+            }
+            else
+            {
+                nameAndModes[args[index]] = defaultMode;
+            }
         }
         else
         {
-            std::cout << "forge: unknown option " << args[index] << "'\n";
+            nameAndModes[args[index]] = defaultMode;
         }
         index++;
     }
-    if (index >= args.size())
+
+    for (const auto &pair : nameAndModes)
     {
-        std::cout << "forge: missing directory operand\n";
-        return;
-    }
-    for (size_t i = index; i < args.size(); i++)
-    {
-        std::string dirPath = args[i];
+        std::string dirPath = pair.first;
         std::vector<std::string> paths = splitPath(dirPath);
         std::string currentPath;
 
         if (!dirPath.empty() && dirPath[0] == '/')
+        {
             currentPath = "/";
+        }
+
         for (size_t i = 0; i < paths.size(); ++i)
         {
             currentPath += paths[i];
             if (i != paths.size() - 1)
                 currentPath += "/";
 
-            if (mkdir(currentPath.c_str()) == -1)
+            if (mkdir(currentPath.c_str(), pair.second) == -1)
             {
-                std::cout << "Cannot create - " << tmp << "\n";
+                std::cout << "Cannot create - " << dirPath << "\n";
                 break;
             }
         }
     }
-
 #endif
 }
 
@@ -779,7 +799,6 @@ void Sys ::PrintError(const TCHAR *msg)
     p = nullptr;
 }
 
-
 // getting procesess
 BOOL Sys ::GetProcessListWin()
 {
@@ -826,7 +845,7 @@ BOOL Sys ::GetProcessListWin()
                     PrintError(TEXT("GetPriorityClass"));
                 CloseHandle(hProcess);
             }
-            
+
             _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
             _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
             _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
@@ -834,10 +853,9 @@ BOOL Sys ::GetProcessListWin()
             if (dwPriorityClass)
                 _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);
 
-            std::cout<<"\n=======================================================\n";
+            std::cout << "\n=======================================================\n";
         }
     }
-    
 
     CloseHandle(hProcessSnap);
     return (TRUE);
@@ -1026,70 +1044,160 @@ void Sys::GetAdapterInfoWin()
 #endif
 
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
-pid_t Sys::GetPIDbyName(const char *cchrptr_ProcessName, int intCaseSensitiveness, int intExactMatch)
+void Sys::GetProcessesUnix()
 {
-    char chrarry_CommandLinePath[100];
-    char chrarry_NameOfProcess[300];
-    char *chrptr_StringToCompare = NULL;
-    pid_t pid_ProcessIdentifier = (pid_t)-1;
-    struct dirent *de_DirEntity = NULL;
-    DIR *dir_proc = NULL;
+    DIR *dir;
+    struct dirent *entry;
 
-    int (*CompareFunction)(const char *, const char *, int);
-
-    if (intExactMatch)
-        CompareFunction = &strcmp_Wrapper;
-    else
-        CompareFunction = &strstr_Wrapper;
-
-    dir_proc = opendir(PROC_DIRECTORY);
-    if (dir_proc == NULL)
+    dir = opendir("/proc");
+    if (!dir)
     {
-        perror("Couldn't open the " PROC_DIRECTORY " directory");
-        return (pid_t)-2;
+        perror("opendir");
     }
 
-    // Loop while not NULL
-    while ((de_DirEntity = readdir(dir_proc)))
+    std::cout << "PID\tPPID\tNAME\n";
+    std::cout << "---------------------------\n";
+
+    while ((entry = readdir(dir)) != nullptr)
     {
-        if (de_DirEntity->d_type == DT_DIR)
-        {
-            if (IsNumeric(de_DirEntity->d_name))
-            {
-                strcpy(chrarry_CommandLinePath, PROC_DIRECTORY);
-                strcat(chrarry_CommandLinePath, de_DirEntity->d_name);
-                strcat(chrarry_CommandLinePath, "/cmdline");
-                FILE *fd_CmdLineFile = fopen(chrarry_CommandLinePath, "rt"); // open the file for reading text
-                if (fd_CmdLineFile)
-                {
-                    fscanf(fd_CmdLineFile, "%s", chrarry_NameOfProcess); // read from /proc/<NR>/cmdline
-                    fclose(fd_CmdLineFile);                              // close the file prior to exiting the routine
+        std::string pidStr = entry->d_name;
+        if (!isNumeric(pidStr))
+            continue;
 
-                    if (strrchr(chrarry_NameOfProcess, '/'))
-                        chrptr_StringToCompare = strrchr(chrarry_NameOfProcess, '/') + 1;
-                    else
-                        chrptr_StringToCompare = chrarry_NameOfProcess;
+        std::string statPath = "/proc/" + pidStr + "/stat";
+        std::ifstream statFile(statPath);
+        if (!statFile.is_open())
+            continue;
 
-                    // printf("Process name: %s\n", chrarry_NameOfProcess);
-                    // printf("Pure Process name: %s\n", chrptr_StringToCompare );
+        int pid, ppid;
+        std::string comm;
+        char state;
 
-                    if (CompareFunction(chrptr_StringToCompare, cchrptr_ProcessName, intCaseSensitiveness))
-                    {
-                        pid_ProcessIdentifier = (pid_t)atoi(de_DirEntity->d_name);
-                        closedir(dir_proc);
-                        return pid_ProcessIdentifier;
-                    }
-                }
-            }
-        }
+        std::string line;
+        std::getline(statFile, line);
+        std::istringstream iss(line);
+
+        iss >> pid;
+        iss >> std::ws;
+        iss.ignore(1, '(');
+        std::getline(iss, comm, ')');
+        iss >> state >> ppid;
+
+        std::cout << pid << "\t" << ppid << "\t" << comm << "\n";
     }
-    closedir(dir_proc);
-    return pid_ProcessIdentifier;
 }
 
-pid_t Sys ::GetPIDbyName(const char *cchrptr_ProcessName)
+void Sys::GetNetworkInfoUnix()
 {
-    return GetPIDbyName(cchrptr_ProcessName, CASE_INSENSITIVE, EXACT_MATCH);
+    struct ifaddrs *ifaddr, *ifa;
+    char addr[INET6_ADDRSTRLEN];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+    }
+
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next)
+    {
+        if (!ifa->ifa_addr)
+            continue;
+
+        // Check for IPv4 or IPv6
+        int family = ifa->ifa_addr->sa_family;
+
+        if (family == AF_INET || family == AF_INET6)
+        {
+            void *in_addr = nullptr;
+
+            if (family == AF_INET)
+                in_addr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+            else
+                in_addr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+
+            inet_ntop(family, in_addr, addr, sizeof(addr));
+
+            std::cout << "Interface: " << ifa->ifa_name
+                      << "\n  Address: " << addr
+                      << "\n  Family: " << (family == AF_INET ? "IPv4" : "IPv6")
+                      << "\n\n";
+        }
+    }
+}
+
+// getting info about adapters
+void Sys::GetAdapterInfoUnix()
+{
+    struct ifaddrs *ifaddr, *ifa;
+    char addrBuf[INET6_ADDRSTRLEN];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+        return;
+    }
+
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next)
+    {
+        if (!ifa->ifa_addr)
+            continue;
+
+        std::cout << "Interface: " << ifa->ifa_name << "\n";
+
+        // Flags
+        std::cout << "  Flags: ";
+        if (ifa->ifa_flags & IFF_UP)
+            std::cout << "UP ";
+        if (ifa->ifa_flags & IFF_LOOPBACK)
+            std::cout << "LOOPBACK ";
+        if (ifa->ifa_flags & IFF_BROADCAST)
+            std::cout << "BROADCAST ";
+        if (ifa->ifa_flags & IFF_RUNNING)
+            std::cout << "RUNNING ";
+        std::cout << "\n";
+
+        // IP address
+        int family = ifa->ifa_addr->sa_family;
+        if (family == AF_INET || family == AF_INET6)
+        {
+            void *addrPtr = (family == AF_INET)
+                                ? (void *)&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr
+                                : (void *)&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+
+            inet_ntop(family, addrPtr, addrBuf, sizeof(addrBuf));
+            std::cout << "  Address (" << (family == AF_INET ? "IPv4" : "IPv6") << "): "
+                      << addrBuf << "\n";
+        }
+
+        // MAC address (works for AF_PACKET)
+        if (ifa->ifa_addr->sa_family == AF_PACKET)
+        {
+            struct sockaddr_ll *s = (struct sockaddr_ll *)ifa->ifa_addr;
+            std::cout << "  MAC: ";
+            for (int i = 0; i < s->sll_halen; i++)
+            {
+                printf("%02x%s", s->sll_addr[i], (i + 1 != s->sll_halen) ? ":" : "");
+            }
+            std::cout << "\n";
+        }
+
+        // MTU
+        int sock = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock >= 0)
+        {
+            struct ifreq ifr;
+            memset(&ifr, 0, sizeof(ifr));
+            strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
+            if (ioctl(sock, SIOCGIFMTU, &ifr) == 0)
+            {
+                std::cout << "  MTU: " << ifr.ifr_mtu << "\n";
+            }
+            close(sock);
+        }
+
+        std::cout << "--------------------------------------\n";
+    }
+
+    freeifaddrs(ifaddr);
 }
 #endif
 
@@ -1101,33 +1209,43 @@ void Sys ::execute(const std::vector<std::string> &args)
         return;
     }
 
-    if (args[1] == "-p")
+    for (size_t i = 1; i < args.size(); i++)
     {
-#if defined(_WIN64) || defined(_WIN32)
-        GetProcessListWin();
-#endif
-#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
-        pid_t pid = GetPIDbyName("bash");
-        printf("PID %d\n", pid);
-#endif
-        std::cout << "\n";
-    }
+        if (args[i] == "-p" || args[i]=="--proc")
+        {
+            std::cout << "Processes Informations\n"
+                      << "---------------------" << "\n";
+            #if defined(_WIN64) || defined(_WIN32)
+            GetProcessListWin();
+            #endif
+            #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+            GetProcessesUnix();
+            #endif
+            std::cout << "\n";
+        }
 
-    if (args[1] == "-n")
-    {
-        std::cout << "Network Informations\n"
-                  << "---------------------" << "\n";
-#if defined(_WIN64) || defined(_WIN32)
-        GetNetworkInfoWin();
-#endif
-    }
+        else if (args[i] == "-n" || args[i]=="--network")
+        {
+            std::cout << "Network Informations\n"
+                      << "---------------------" << "\n";
+            #if defined(_WIN64) || defined(_WIN32)
+            GetNetworkInfoWin();
+            #endif
+            #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+            GetNetworkInfoUnix();
+            #endif
+        }
 
-    if (args[1] == "-a")
-    {
-        std::cout << "Adapter Informations\n"
-                  << "---------------------" << "\n";
-#if defined(_WIN64) || defined(_WIN32)
-        GetAdapterInfoWin();
-#endif
+        if (args[i] == "-a" || args[i]=="--adapters")
+        {
+            std::cout << "Adapter Informations\n"
+                      << "---------------------" << "\n";
+            #if defined(_WIN64) || defined(_WIN32)
+            GetAdapterInfoWin();
+            #endif
+            #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+            GetAdapterInfoUnix();
+            #endif
+        }
     }
 }

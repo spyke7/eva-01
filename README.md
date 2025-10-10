@@ -78,6 +78,9 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
     3. For getting the processes - [taking snapshot and view process](https://learn.microsoft.com/en-us/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes)
     4. For getting the information of DNS server, adapters information - [ip helper from microsoft](https://learn.microsoft.com/en-us/windows/win32/iphlp/getting-started-with-ip-helper?redirectedfrom=MSDN)
   
+  - In linux  -
+    1. For getting info about network and adapters - `man getifaddrs`; inet_ntop() → convert IP addresses, sockaddr_ll → read MAC addresses
+  
 
 ### Commands:
 - [x] history - It shows all the previous commands executed and also searches commands related with command name(s) given. To run a particular command from history with their index - `!<index_number>`
@@ -88,8 +91,10 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - [x] time - It just shows you the time.
 - [x] forge - It makes directory. Command - `forge <directory1> <directory2> <...>`
 - [x] sys - It can be used to interact with the system and processes. Also it shows specific things related to the system.
-        `sys` - shows system and hardware informations.
-        `sys -p` - shows all the processes.
+        sys - shows system and hardware informations.
+         -p | --proc - shows all the processes.
+         -n | --network - shows information about your network and it's adapters.
+         -a | --adapters - shows information about adapters.
 - [x] calc - Just a simple calculator.
 - [x] say - Prints text to the console and also write and appends text into files which are in double quotes only
          and ends with >> and file name with proper space. `say <text>` or `say <"text"> >> <filename>`
@@ -102,6 +107,7 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Internet
+- `sys -n` and `sys -a` shows information about dns server, IF index (Windows), ipv4 or ipv6 address for adapters.
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -123,9 +129,8 @@ or
 `mingw32-make` or `make` to run the makefile
 
 Run (linux/unix) - 
-Still there are some issues for running it in linux. It will be fixed shortly.
 
-*Some functionalities are not yet developed for linux*
+`g++ -Iinclude src/*.cpp -o eva-01`
 
 
 ## **CONTIBUTING**
