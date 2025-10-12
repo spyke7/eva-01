@@ -75,7 +75,6 @@ void Say ::execute(const std::vector<std::string> &args)
     {
         filePath = args[args.size() - 1];
     }
-    std::cout << filePath << std::endl;
     if (filePath.size() == 0)
     {
         for (size_t i = 1; i < args.size(); ++i)
