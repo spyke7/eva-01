@@ -104,6 +104,7 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - [x] help - Gives information about the commands
 - [x] erase - Deletes the provided files and folders. `erase <file1> <folder1> <file2> <...>`
 - [x] craft - Creates files only. `craft <file1> <file2> <...>`
+- [x] run - Runs the commands stored in `<filename.eva>` or `<filename.txt>`, one by one.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Internet
@@ -111,11 +112,6 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Important:
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 ## <br/>
 
@@ -141,9 +137,9 @@ If you have a suggestion that would make this better, please fork the repo and c
 Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b eva-01`)
+2. Create your Feature Branch (`git checkout -b my-branch`)
 3. Commit your Changes (`git commit -m 'Add some advices'`)
-4. Push to the Branch (`git push origin eva-01`)
+4. Push to the Branch (`git push origin my-branch`)
 5. Open a Pull Request
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

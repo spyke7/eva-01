@@ -54,6 +54,16 @@ public:
     virtual std::string description() const = 0;
 };
 
+class Run : public TerminalDogma
+{
+    CentralDogma &core;
+
+public:
+    Run(CentralDogma &c) : core(c) {};
+    void execute(const std::vector<std::string> &args) override;
+    std::string description() const override { return "Runs the commands stored in <filename>.eva, one by one."; }
+};
+
 class Say : public TerminalDogma
 {
 public:

@@ -28,6 +28,7 @@ int main(){
     CentralDogma core;
 
     // registering the commands
+    core.registerCommand("run", std::make_unique<Run>(core));
     core.registerCommand("say", std::make_unique<Say>());
     core.registerCommand("help", std::make_unique<Help>(core));
     core.registerCommand("calc", std::make_unique<Calculate>());
@@ -42,7 +43,6 @@ int main(){
     core.registerCommand("shift", std::make_unique<Shift>());
     core.registerCommand("history", std::make_unique<History>(core));
     core.registerCommand("sys", std::make_unique<Sys>());
-
 
     // getting credentials
     std::string username, password;

@@ -2,17 +2,80 @@
 #include "CentralDogma.hpp"
 #include <iostream>
 
+void Run ::execute(const std::vector<std::string> &args)
+{
+    if (args[1] != "<<")
+    {
+        std::cout << "Put << before giving files\n";
+        return;
+    }
+
+    for (size_t i = 2; i < args.size(); i++)
+    {
+        size_t pos = args[i].rfind('.');
+
+        bool correctExt = false;
+        if (pos == std::string::npos)
+        {
+            std::cout << "Provide file extension\n";
+        }
+        if (args[i].substr(pos + 1) == "eva" || args[i].substr(pos + 1) == "txt")
+        {
+            correctExt = true;
+        }
+
+        if (correctExt)
+        {
+            std::ifstream file(args[i]);
+            if (!file.is_open())
+            {
+                std::cout << "Cannot open script file: " << args[i] << "\n";
+                return;
+            }
+
+            std::string line;
+            while (std::getline(file, line))
+            {
+                if (line.empty())
+                {
+                    continue;
+                }
+                std::vector<std::string> tokens;
+                std::string token;
+                for (size_t i = 0; i < line.length(); i++)
+                {
+                    if (line[i] != ' ')
+                    {
+                        token += line[i];
+                    }
+                    else
+                    {
+                        if (token.size() != 0)
+                        {
+                            tokens.push_back(token);
+                            token.clear();
+                        }
+                    }
+                }
+                if (token.size() != 0)
+                    tokens.push_back(token);
+
+                core.parseCommand(tokens);
+            }
+
+            file.close();
+        }
+    }
+}
+
 void Say ::execute(const std::vector<std::string> &args)
 {
     std::string filePath;
     if (args[args.size() - 2] == ">>" && args.size() >= 4)
     {
-        if (args[1][0] == '"' && args[args.size() - 3][args[args.size() - 3].size() - 1] == '"')
-        {
-            filePath = args[args.size() - 1];
-        }
+        filePath = args[args.size() - 1];
     }
-
+    std::cout << filePath << std::endl;
     if (filePath.size() == 0)
     {
         for (size_t i = 1; i < args.size(); ++i)
@@ -28,15 +91,10 @@ void Say ::execute(const std::vector<std::string> &args)
         {
             for (size_t j = 0; j < args[i].size(); j++)
             {
-                if ((i == 1 && j == 0) || (i == args.size() - 3 && j == args[args.size() - 3].size() - 1))
-                {
-                    continue;
-                }
-                else
-                {
-                    userText += args[i][j];
-                }
+
+                userText += args[i][j];
             }
+            userText+=' ';
         }
         std::cout << userText << "\n";
         std::ofstream file(filePath, std::ios::app);
@@ -1211,41 +1269,41 @@ void Sys ::execute(const std::vector<std::string> &args)
 
     for (size_t i = 1; i < args.size(); i++)
     {
-        if (args[i] == "-p" || args[i]=="--proc")
+        if (args[i] == "-p" || args[i] == "--proc")
         {
             std::cout << "Processes Informations\n"
                       << "---------------------" << "\n";
-            #if defined(_WIN64) || defined(_WIN32)
+#if defined(_WIN64) || defined(_WIN32)
             GetProcessListWin();
-            #endif
-            #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#endif
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
             GetProcessesUnix();
-            #endif
+#endif
             std::cout << "\n";
         }
 
-        else if (args[i] == "-n" || args[i]=="--network")
+        else if (args[i] == "-n" || args[i] == "--network")
         {
             std::cout << "Network Informations\n"
                       << "---------------------" << "\n";
-            #if defined(_WIN64) || defined(_WIN32)
+#if defined(_WIN64) || defined(_WIN32)
             GetNetworkInfoWin();
-            #endif
-            #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#endif
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
             GetNetworkInfoUnix();
-            #endif
+#endif
         }
 
-        if (args[i] == "-a" || args[i]=="--adapters")
+        if (args[i] == "-a" || args[i] == "--adapters")
         {
             std::cout << "Adapter Informations\n"
                       << "---------------------" << "\n";
-            #if defined(_WIN64) || defined(_WIN32)
+#if defined(_WIN64) || defined(_WIN32)
             GetAdapterInfoWin();
-            #endif
-            #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#endif
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
             GetAdapterInfoUnix();
-            #endif
+#endif
         }
     }
 }
