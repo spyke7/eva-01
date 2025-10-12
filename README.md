@@ -40,9 +40,6 @@ Eva-01 features:
       <a href="#future-features">FUTURE FEATURES</a>
     </li>
 		<ul>
-			
-		</ul>
-	</li>
     <li><a href="#contributing">CONTRIBUTING</a></li>
     <li><a href="#support">SUPPORT</a></li>
     <li><a href="#license">LICENSE</a></li>
