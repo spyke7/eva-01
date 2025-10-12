@@ -90,10 +90,10 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - [x] time - It just shows you the time.
 - [x] forge - It makes directory. Command - `forge <directory1> <directory2> <...>`
 - [x] sys - It can be used to interact with the system and processes. Also it shows specific things related to the system.
-        sys - shows system and hardware informations.
-         -p | --proc - shows all the processes.
-         -n | --network - shows information about your network and it's adapters.
-         -a | --adapters - shows information about adapters.
+  - sys - shows system and hardware informations.
+  - p | --proc - shows all the processes.
+  - n | --network - shows information about your network and it's adapters.
+  - a | --adapters - shows information about adapters.
 - [x] calc - Just a simple calculator.
 - [x] say - Prints text to the console and also write and appends text into files which are in double quotes only
          and ends with >> and file name with proper space. `say <text>` or `say <"text"> >> <filename>`
