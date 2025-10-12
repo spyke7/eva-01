@@ -35,9 +35,12 @@ Eva-01 features:
 		<li><a href="#internet">INTERNET</a></li>
       </ul>
     </li>
-    <li><a href="#getting-sarted">GETTING STARTED</a>
+    <li><a href="#getting-sarted">GETTING STARTED</a></li>
+    <li>
+      <a href="#future-features">FUTURE FEATURES</a>
+    </li>
 		<ul>
-			<li><a href=#screenshot>SCREENSHOT</a>
+			
 		</ul>
 	</li>
     <li><a href="#contributing">CONTRIBUTING</a></li>
@@ -112,6 +115,12 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## **Future Features**
+1. A tool to ping or a packet sniffer.
+2. A tool to make api requests.
+3. Command to kill or run processes.
+4. Executing commands that run other processes like running a python or cpp file.
 
 ## <br/>
 
