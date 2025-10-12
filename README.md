@@ -128,16 +128,14 @@ Run (linux/unix) -
 `g++ -Iinclude src/*.cpp -o eva-01`
 
 #### Example Commands - 
-1. ```bash
+1. ```
+	calc 96/2 || say ok  ------>(It shows 48 as the first command is running successfully, so the second command will not run)
+	view a.txt && say hello ------>(If a.txt is there then its content along with hello is displayed. But if it is not present, then hello will not be displayed)
+	view a.txt ; say hello; craft "hello world.txt" ------>(All this commands will be executed one by one, irrespective of the output)
 
-    calc 96/2 || say ok  ------>(It shows 48 as the first command is running successfully, so the second command will not run)
-    view a.txt && say hello ------>(If a.txt is there then its content along with hello is displayed. But if it is not present, then hello will not be displayed)
-    view a.txt ; say hello; craft "hello world.txt" ------>(All this commands will be executed one by one, irrespective of the output)
-
-  ```
 
 2. `run << hello.txt` ----> All the commands inside hello.txt written one by one are executed.
-    Sample hello.txt
+    Sample hello.txt -
     ```bash
     calc 2+4/(3*1)
     craft a.txt && say "hello world" >> a.txt
@@ -175,4 +173,5 @@ The license is GNU public license see more n LICENSE
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 **This is all the things about my program. If you like it, then please share with others. This is a project which the begineers as well as intermediate programmers can build. Support me by following my github account. Thank you.**
+
 
