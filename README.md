@@ -112,12 +112,6 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## **Future Features**
-1. A tool to ping or a packet sniffer.
-2. A tool to make api requests.
-3. Command to kill or run processes.
-4. Executing commands that run other processes like running a python or cpp file.
-
 ## <br/>
 
 ## **GETTING STARTED**
@@ -133,6 +127,27 @@ Run (linux/unix) -
 
 `g++ -Iinclude src/*.cpp -o eva-01`
 
+#### Example Commands - 
+1. ```bash
+
+    calc 96/2 || say ok  ------>(It shows 48 as the first command is running successfully, so the second command will not run)
+    view a.txt && say hello ------>(If a.txt is there then its content along with hello is displayed. But if it is not present, then hello will not be displayed)
+    view a.txt ; say hello; craft "hello world.txt" ------>(All this commands will be executed one by one, irrespective of the output)
+
+  ```
+
+2. `run << hello.txt` ----> All the commands inside hello.txt written one by one are executed.
+    Sample hello.txt
+    ```bash
+    calc 2+4/(3*1)
+    craft a.txt && say "hello world" >> a.txt
+    ```
+
+## **Future Features**
+1. A tool to ping or a packet sniffer.
+2. A tool to make api requests.
+3. Command to kill or run processes.
+4. Executing commands that run other processes like running a python or cpp file.
 
 ## **CONTIBUTING**
 
