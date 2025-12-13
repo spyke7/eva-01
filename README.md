@@ -12,7 +12,7 @@
 <div align="center">
 <h1 align="center">🟣 EVA-01 Shell</h1>
 The <b>Eva-01 Shell</b> is an immersive CLI experience.  
-Inspired by **NERV and EVAs** from _Neon Genesis Evangelion_.
+Inspired by <b>NERV and EVAs</b> from Neon Genesis Evangelion.
 
 Eva-01 features:
 
@@ -115,8 +115,9 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 - `sys -n` and `sys -a` shows information about dns server, IF index (Windows), ipv4 or ipv6 address for adapters.
 - `probe` function basically works like ping as in windows to ping a given host. It is a simple packet sniffer with some basic details and a graph (simple). If you give the `-t` flag it will run continuously unless you stop it. `-i` flag is just interval the function will sleep between two consecutive pinging.
 
-  Sample of probe - 
-  
+  Sample of probe -
+  <img width="1091" height="705" alt="probe_demo1" src="https://github.com/user-attachments/assets/0be42ef6-c518-48b2-9c03-92b8f9fc1780" />
+
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -185,6 +186,7 @@ The license is GNU public license see more n LICENSE
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 **This is all the things about my program. If you like it, then please share with others. This is a project which the begineers as well as intermediate programmers can build. Support me by following my github account. Thank you.**
+
 
 
 
