@@ -132,6 +132,9 @@ or
 
 `mingw32-make` or `make` to run the makefile
 
+Go to the latest release and download the eva-01.exe
+Then run it.
+
 Run (linux/unix) - 
 
 `g++ -Iinclude src/*.cpp -o eva-01`
@@ -182,5 +185,6 @@ The license is GNU public license see more n LICENSE
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 **This is all the things about my program. If you like it, then please share with others. This is a project which the begineers as well as intermediate programmers can build. Support me by following my github account. Thank you.**
+
 
 
