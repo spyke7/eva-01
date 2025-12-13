@@ -1,4 +1,15 @@
 #pragma once
+
+#if defined(_WIN32) || defined(_WIN64)
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0601
+#endif
+#define WIN32_LEAN_AND_MEAN
+// CRITICAL: winsock2.h MUST come before windows.h
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -23,19 +34,65 @@
 #include <sstream>
 #include <cstdarg>
 #include <cstdlib>
+#include <chrono>
+#include <thread>
+#include <iomanip>
+#include <csignal>
+#include <algorithm>
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
 #include <windows.h>
 #include <tchar.h>
 #include <psapi.h>
 #include <tlhelp32.h>
-#include <winsock2.h>
 #include <iphlpapi.h>
+
+#ifndef ERROR_BUFFER_OVERFLOW
+#define ERROR_BUFFER_OVERFLOW 111L
+#endif
+
+#ifndef ERROR_INSUFFICIENT_BUFFER
+#define ERROR_INSUFFICIENT_BUFFER 122L
+#endif
+
+#ifndef NO_ERROR
+#define NO_ERROR 0L
+#endif
+
+#ifndef ERROR_SUCCESS
+#define ERROR_SUCCESS 0L
+#endif
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+inline const char *inet_ntop_mingw(int af, const void *src, char *dst, size_t size)
+{
+    if (af == AF_INET)
+    {
+        struct sockaddr_in in;
+        memset(&in, 0, sizeof(in));
+        in.sin_family = AF_INET;
+        memcpy(&in.sin_addr, src, sizeof(struct in_addr));
+
+        DWORD s = (DWORD)size;
+        if (WSAAddressToStringA((LPSOCKADDR)&in, sizeof(in), nullptr, dst, &s) == 0)
+        {
+            return dst;
+        }
+    }
+    return nullptr;
+}
+// Override inet_ntop for MinGW
+#define inet_ntop(af, src, dst, size) inet_ntop_mingw(af, src, dst, size)
+#endif
+
 #endif
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+#include <netdb.h>
+#include <netinet/ip_icmp.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <sys/select.h>
 #include <netpacket/packet.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
@@ -43,6 +100,9 @@
 #include <cerrno>
 #include <arpa/inet.h>
 #endif
+
+#define ICMP_ECHO_REQUEST 8
+#define ICMP_ECHO_REPLY 0
 
 class CentralDogma;
 
@@ -216,4 +276,51 @@ public:
     void GetNetworkInfoUnix();
     void GetAdapterInfoUnix();
 #endif
+};
+
+class Probe : public TerminalDogma
+{
+public:
+    void execute(const std::vector<std::string> &args) override;
+    std::string description() const override
+    {
+        return "Network diagnostics tool with real-time latency visualization.\n"
+               "\tprobe <host> [-c count] [-t] [-i interval]\n"
+               "\t  -c <count>   : Number of packets to send (default: 4)\n"
+               "\t  -t           : Continuous ping\n"
+               "\t  -i <ms>      : Interval between pings in ms (default: 1000)";
+    }
+
+private:
+    struct PingStats
+    {
+        int sent = 0;
+        int received = 0;
+        int lost = 0;
+        double minTime = 9999.0;
+        double maxTime = 0.0;
+        double totalTime = 0.0;
+        std::vector<double> latencies;
+    };
+
+    void displayHeader(const std::string &host, const std::string &ip);
+    void displayResult(int seq, double latency, const std::string &ip, int ttl);
+    void displayStats(const PingStats &stats, const std::string &host);
+    void displayGraph(const std::vector<double> &latencies);
+    std::string resolveHostname(const std::string &host);
+    std::string getSignalQuality(double avgLatency);
+
+    // Use raw sockets on all platforms (MinGW compatible)
+    bool pingRawSocket(const std::string &ip, double &latency, int &ttl);
+    unsigned short checksum(void *b, int len);
+
+    // ICMP packet structure
+    struct ICMPHeader
+    {
+        unsigned char type;
+        unsigned char code;
+        unsigned short checksum;
+        unsigned short id;
+        unsigned short seq;
+    };
 };

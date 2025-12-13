@@ -82,6 +82,11 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
   
 
 ### Commands:
+- [x] probe - Network diagnostics tool with real-time latency visualization.
+          `probe <host> [-c count] [-t] [-i interval]`
+            -c <count>   : Number of packets to send (default: 4)
+            -t           : Continuous ping
+            -i <ms>      : Interval between pings in ms (default: 1000)
 - [x] history - It shows all the previous commands executed and also searches commands related with command name(s) given. To run a particular command from history with their index - `!<index_number>`
 - [x] shift - Moves and renames files/folders. `shift <file1> <folder1/file1>` or `shift <folder2/folder3> <folder4/folder3>`
         You need to give the name of the file/folder along with the destination you want to move.
@@ -108,6 +113,10 @@ Based on this computer system mentioned in anime, the eva-01 also has two header
 
 ### Internet
 - `sys -n` and `sys -a` shows information about dns server, IF index (Windows), ipv4 or ipv6 address for adapters.
+- `probe` function basically works like ping as in windows to ping a given host. It is a simple packet sniffer with some basic details and a graph (simple). If you give the `-t` flag it will run continuously unless you stop it. `-i` flag is just interval the function will sleep between two consecutive pinging.
+
+  Sample of probe - 
+  
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

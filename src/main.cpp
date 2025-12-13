@@ -43,6 +43,7 @@ int main(){
     core.registerCommand("shift", std::make_unique<Shift>());
     core.registerCommand("history", std::make_unique<History>(core));
     core.registerCommand("sys", std::make_unique<Sys>());
+    core.registerCommand("probe", std::make_unique<Probe>());
 
     // getting credentials
     std::string username, password;

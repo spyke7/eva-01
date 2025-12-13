@@ -2,6 +2,15 @@
 #include "CentralDogma.hpp"
 #include <iostream>
 
+inline void sleep_milliseconds(int milliseconds)
+{
+#if defined(_WIN32) || defined(_WIN64)
+    Sleep(milliseconds); // Windows Sleep takes milliseconds
+#else
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+#endif
+}
+
 void Run ::execute(const std::vector<std::string> &args)
 {
     if (args[1] != "<<")
@@ -93,7 +102,7 @@ void Say ::execute(const std::vector<std::string> &args)
 
                 userText += args[i][j];
             }
-            userText+=' ';
+            userText += ' ';
         }
         std::cout << userText << "\n";
         std::ofstream file(filePath, std::ios::app);
@@ -1305,4 +1314,401 @@ void Sys ::execute(const std::vector<std::string> &args)
 #endif
         }
     }
+}
+
+// probe implementation
+
+static volatile bool keepPinging = true;
+
+void signalHandler(int signum)
+{
+    keepPinging = false;
+}
+
+std::string Probe::resolveHostname(const std::string &host)
+{
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(host.c_str(), nullptr, &hints, &res) != 0)
+    {
+        return "";
+    }
+
+    char ipstr[INET_ADDRSTRLEN];
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;
+    inet_ntop(AF_INET, &(ipv4->sin_addr), ipstr, sizeof(ipstr));
+
+    std::string result(ipstr);
+    freeaddrinfo(res);
+    return result;
+}
+
+void Probe::displayHeader(const std::string &host, const std::string &ip)
+{
+    std::cout << "PROBE - \n";
+    std::cout << "|--------------------------------------------------------------|\n";
+    std::cout << "  Target Host: " << host << "\n";
+    std::cout << "  Target IP:   " << ip << "\n";
+    std::cout << "----------------------------------------------------------------\n\n";
+}
+
+void Probe::displayResult(int seq, double latency, const std::string &ip, int ttl)
+{
+    std::cout << std::fixed << std::setprecision(2);
+
+    // coding based on latency
+    std::string indicator;
+    if (latency < 50)
+    {
+        indicator = "OPTIMAL";
+    }
+    else if (latency < 100)
+    {
+        indicator = "STABLE";
+    }
+    else if (latency < 200)
+    {
+        indicator = "DEGRADED";
+    }
+    else
+    {
+        indicator = "CRITICAL";
+    }
+
+    std::cout << "[#" << std::setw(3) << std::setfill('0') << seq << "] "
+              << indicator << " | "
+              << ip << " | "
+              << "TTL=" << ttl << " | "
+              << "Time=" << std::setw(7) << latency << "ms\n";
+}
+
+void Probe::displayGraph(const std::vector<double> &latencies)
+{
+    if (latencies.empty())
+        return;
+
+    const int graphHeight = 10;
+    const int graphWidth = std::min((int)latencies.size(), 50);
+
+    double maxLatency = *std::max_element(latencies.begin(), latencies.end());
+    double minLatency = *std::min_element(latencies.begin(), latencies.end());
+
+    std::cout << "\nSynchronization Pattern\n";
+    std::cout << "--------------------------------------------------------------\n";
+
+    // Display graph
+    for (int row = graphHeight; row >= 0; --row)
+    {
+        double threshold = minLatency + (maxLatency - minLatency) * row / graphHeight;
+        std::cout << std::setw(7) << std::fixed << std::setprecision(1) << threshold << "ms"<<" |";
+
+        for (int col = 0; col < graphWidth && col < latencies.size(); ++col)
+        {
+            if (latencies[latencies.size() - graphWidth + col] >= threshold)
+            {
+                std::cout << "||";
+            }
+            else
+            {
+                std::cout << " ";
+            }
+        }
+        std::cout << "\n";
+    }
+
+    std::cout << "          +";
+    for (int i = 0; i < graphWidth; ++i)
+    {
+        std::cout << "__";
+    }
+    std::cout << "\n";
+}
+
+std::string Probe::getSignalQuality(double avgLatency)
+{
+    if (avgLatency < 30)
+        return "EXCELLENT - Optimal";
+    if (avgLatency < 50)
+        return "GOOD - Synchronization Stable";
+    if (avgLatency < 100)
+        return "FAIR - Minor AT Field Interference";
+    if (avgLatency < 200)
+        return "POOR - Significant Degradation";
+    return "CRITICAL - Connection Unstable";
+}
+
+void Probe::displayStats(const PingStats &stats, const std::string &host)
+{
+    std::cout << "\nMISSION REPORT: Target - " << host << "\n";
+    std::cout << "--------------------------------------------------------------\n";
+
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "  Packets: Sent=" << stats.sent
+              << ", Received=" << stats.received
+              << ", Lost=" << stats.lost
+              << " (" << (stats.sent > 0 ? (stats.lost * 100.0 / stats.sent) : 0) << "%)\n";
+
+    if (stats.received > 0)
+    {
+        double avgLatency = stats.totalTime / stats.received;
+        std::cout << "  Latency: Min=" << stats.minTime << "ms"
+                  << ", Max=" << stats.maxTime << "ms"
+                  << ", Avg=" << avgLatency << "ms\n";
+        std::cout << "  Signal Quality: " << getSignalQuality(avgLatency) << "\n";
+
+        displayGraph(stats.latencies);
+    }
+
+    std::cout << "--------------------------------------------------------------\n";
+}
+
+unsigned short Probe::checksum(void *b, int len)
+{
+    unsigned short *buf = (unsigned short *)b;
+    unsigned int sum = 0;
+    unsigned short result;
+
+    for (sum = 0; len > 1; len -= 2)
+        sum += *buf++;
+    if (len == 1)
+        sum += *(unsigned char *)buf;
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    result = ~sum;
+    return result;
+}
+
+bool Probe::pingRawSocket(const std::string &ip, double &latency, int &ttl)
+{
+#if defined(_WIN32) || defined(_WIN64)
+    // Windows raw socket implementation
+    SOCKET sockRaw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockRaw == INVALID_SOCKET)
+    {
+        std::cerr << "Error: Administrator privileges required for ICMP on Windows\n";
+        return false;
+    }
+
+    // Set timeout
+    int timeout = 5000;
+    setsockopt(sockRaw, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
+    struct sockaddr_in dest;
+    memset(&dest, 0, sizeof(dest));
+    dest.sin_family = AF_INET;
+    dest.sin_addr.s_addr = inet_addr(ip.c_str());
+
+    // Prepare ICMP packet
+    char sendBuf[32];
+    ICMPHeader *icmp_hdr = (ICMPHeader *)sendBuf;
+    icmp_hdr->type = ICMP_ECHO_REQUEST;
+    icmp_hdr->code = 0;
+    icmp_hdr->id = (unsigned short)GetCurrentProcessId();
+    icmp_hdr->seq = 1;
+    icmp_hdr->checksum = 0;
+
+    // Fill data
+    memset(sendBuf + sizeof(ICMPHeader), 'E', sizeof(sendBuf) - sizeof(ICMPHeader));
+    icmp_hdr->checksum = checksum(sendBuf, sizeof(sendBuf));
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    if (sendto(sockRaw, sendBuf, sizeof(sendBuf), 0,
+               (struct sockaddr *)&dest, sizeof(dest)) == SOCKET_ERROR)
+    {
+        closesocket(sockRaw);
+        return false;
+    }
+
+    // Receive response
+    char recvBuf[1024];
+    struct sockaddr_in from;
+    int fromlen = sizeof(from);
+
+    int bytes = recvfrom(sockRaw, recvBuf, sizeof(recvBuf), 0,
+                         (struct sockaddr *)&from, &fromlen);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    if (bytes > 0)
+    {
+        // IP header is 20 bytes, skip to ICMP
+        ICMPHeader *recv_icmp = (ICMPHeader *)(recvBuf + 20);
+
+        if (recv_icmp->type == ICMP_ECHO_REPLY)
+        {
+            latency = std::chrono::duration<double, std::milli>(end - start).count();
+            // Extract TTL from IP header
+            ttl = (unsigned char)recvBuf[8];
+            closesocket(sockRaw);
+            return true;
+        }
+    }
+
+    closesocket(sockRaw);
+    return false;
+
+#else
+    // Linux/Unix implementation
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd < 0)
+    {
+        std::cerr << "Error: Root/Administrator privileges required for ICMP\n";
+        return false;
+    }
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ip.c_str());
+
+    // Prepare ICMP packet
+    char packet[64];
+    memset(packet, 0, sizeof(packet));
+    ICMPHeader *icmp_hdr = (ICMPHeader *)packet;
+    icmp_hdr->type = ICMP_ECHO_REQUEST;
+    icmp_hdr->code = 0;
+    icmp_hdr->id = getpid();
+    icmp_hdr->seq = 1;
+    icmp_hdr->checksum = 0;
+    icmp_hdr->checksum = checksum(icmp_hdr, sizeof(packet));
+
+    // Set timeout
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    if (sendto(sockfd, packet, sizeof(packet), 0,
+               (struct sockaddr *)&addr, sizeof(addr)) <= 0)
+    {
+        close(sockfd);
+        return false;
+    }
+
+    char recv_buf[1024];
+    struct sockaddr_in recv_addr;
+    socklen_t addr_len = sizeof(recv_addr);
+
+    int bytes = recvfrom(sockfd, recv_buf, sizeof(recv_buf), 0,
+                         (struct sockaddr *)&recv_addr, &addr_len);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    if (bytes > 0)
+    {
+        // Extract TTL from IP header
+        ttl = (unsigned char)recv_buf[8];
+        latency = std::chrono::duration<double, std::milli>(end - start).count();
+        close(sockfd);
+        return true;
+    }
+
+    close(sockfd);
+    return false;
+#endif
+}
+
+void Probe::execute(const std::vector<std::string> &args)
+{
+    if (args.size() < 2)
+    {
+        std::cout << "Usage: probe <host> [-c count] [-t] [-i interval]\n";
+        return;
+    }
+
+    std::string host = args[1];
+    int count = 4;
+    bool continuous = false;
+    int interval = 1000;
+
+    // Parse arguments
+    for (size_t i = 2; i < args.size(); ++i)
+    {
+        if (args[i] == "-c" && i + 1 < args.size())
+        {
+            count = std::stoi(args[++i]);
+        }
+        else if (args[i] == "-t")
+        {
+            continuous = true;
+        }
+        else if (args[i] == "-i" && i + 1 < args.size())
+        {
+            interval = std::stoi(args[++i]);
+        }
+    }
+
+#if defined(_WIN32) || defined(_WIN64)
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
+        std::cout << "Failed to initialize Winsock\n";
+        return;
+    }
+#endif
+
+    std::string ip = resolveHostname(host);
+    if (ip.empty())
+    {
+        std::cout << "[ERROR] Cannot resolve hostname: " << host << "\n";
+#if defined(_WIN32) || defined(_WIN64)
+        WSACleanup();
+#endif
+        return;
+    }
+
+    displayHeader(host, ip);
+
+    // Setup signal handler for continuous mode
+    if (continuous)
+    {
+        signal(SIGINT, signalHandler);
+        std::cout << "[INFO] Continuous mode active.\n\n";
+    }
+
+    PingStats stats;
+    keepPinging = true;
+
+    for (int i = 0; (continuous ? keepPinging : i < count); ++i)
+    {
+        double latency;
+        int ttl = 0;
+        stats.sent++;
+
+        bool success = pingRawSocket(ip, latency, ttl);
+
+        if (success)
+        {
+            stats.received++;
+            stats.totalTime += latency;
+            stats.minTime = std::min(stats.minTime, latency);
+            stats.maxTime = std::max(stats.maxTime, latency);
+            stats.latencies.push_back(latency);
+
+            displayResult(i + 1, latency, ip, ttl);
+        }
+        else
+        {
+            stats.lost++;
+            std::cout << "[#" << std::setw(3) << std::setfill('0') << (i + 1)
+                      << "] X TIMEOUT - Target unresponsive\n";
+        }
+
+        if ((continuous && keepPinging) || i < count - 1)
+        {
+            sleep_milliseconds(interval);
+        }
+    }
+
+    displayStats(stats, host);
+
+#if defined(_WIN32) || defined(_WIN64)
+    WSACleanup();
+#endif
 }
